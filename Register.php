@@ -5,6 +5,7 @@ include 'db_connect.php';
 $message = "";
 $error = "";
 
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
@@ -13,7 +14,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role      = trim($_POST['role']); // guardian أو teacher
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
-        $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
+
+    $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
         $check->bind_param("s", $email);
         $check->execute();
         $check_result = $check->get_result();
@@ -21,11 +23,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($check_result->num_rows > 0) {
             $error = "البريد الإلكتروني مستخدم بالفعل!";
         } else {
-            $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
+
+        $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("sssss", $full_name, $email, $phone, $password, $role);
 
             if ($stmt->execute()) {
-                $user_id = $stmt->insert_id; 
+                $user_id = $stmt->insert_id;
+
+
                 if ($role == 'guardian') {
                     $stmt_role = $conn->prepare("INSERT INTO guardian (user_id) VALUES (?)");
                     $stmt_role->bind_param("i", $user_id);
@@ -61,7 +66,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
         .register-card { background: #ffffff; padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
-        .logo-title { color: #0284c7; font-size: 28px; font-weight: bold; margin-bottom: 6px; }
+        .logo-container { margin-bottom: 10px; }
+        .app-logo { max-width: 150px; height: auto; object-fit: contain; }
         .sub-title { color: #64748b; font-size: 14px; margin-bottom: 20px; }
         .form-group { text-align: right; margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #334155; font-size: 13px; font-weight: 600; }
@@ -79,7 +85,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <div class="register-card">
-    <div class="logo-title">وصلة 🤟</div>
+    <div class="logo-container">
+        <img src="Logo.jpeg" alt="شعار وصلة" class="app-logo">
+    </div>
     <div class="sub-title">إنشاء حساب جديد في منصة وصلة</div>
 
     <?php if (!empty($error)): ?>
