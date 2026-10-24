@@ -1,14 +1,14 @@
 <?php
-$host     = "localhost";
-$username = "root";         
-$password = "";           
-$dbname   = "interactive_sign_language"; 
+$servername = "localhost";
+$username   = "root";
+$password   = "";
+$dbname     = "interactive_sign_language";
 
-$conn = new mysqli($host, $username, $password, $dbname);
-
-$conn->set_charset("utf8mb4");
+$conn = new mysqli($servername, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die("فشل الاتصال بقاعدة البيانات: " . $conn->connect_error);
 }
+
+$conn->set_charset("utf8mb4");
 ?>
