@@ -5,7 +5,6 @@ include 'db_connect.php';
 $message = "";
 $error = "";
 
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
