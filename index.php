@@ -1,5 +1,6 @@
 <?php
 include 'db_connect.php';
+?>
 <header>
     <h1>مشروع وصلة</h1>
     <nav>
