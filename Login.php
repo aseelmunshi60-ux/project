@@ -1,6 +1,5 @@
 <?php
 include 'db_connect.php';
-
 $error_message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -47,12 +46,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group { text-align: right; margin-bottom: 18px; }
         .form-group label { display: block; margin-bottom: 6px; color: #334155; font-size: 14px; font-weight: 600; }
         .form-group input { width: 100%; padding: 12px 15px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; }
-        .form-group input:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
-        .btn-submit { width: 100%; padding: 12px; background-color: #0284c7; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-submit:hover { background-color: #0369a1; }
+        .form-group input:focus { border-color: #4776a8; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+        .btn-submit { width: 100%; padding: 12px; background-color: #4776a8; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background-color: #4776a8; }
         .error-box { background-color: #fef2f2; color: #dc2626; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fecaca; }
         .footer-links { margin-top: 20px; font-size: 14px; color: #64748b; }
-        .footer-links a { color: #0284c7; text-decoration: none; font-weight: bold; }
+        .footer-links a { color: #4776a8; text-decoration: none; font-weight: bold; }
         .footer-links a:hover { text-decoration: underline; }
     </style>
 </head>
