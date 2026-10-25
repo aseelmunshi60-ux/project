@@ -1,5 +1,6 @@
 <?php
 include 'db_connect.php';
+
 $error_message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -38,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>تسجيل الدخول - منصة وصلة</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { background: linear-gradient(135deg, #e0f2fe, #fdfbf7); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .login-card { background: #ffffff; padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         .logo-container { margin-bottom: 10px; }
         .app-logo { max-width: 160px; height: auto; object-fit: contain; }
