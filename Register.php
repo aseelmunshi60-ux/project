@@ -1,5 +1,6 @@
 <?php
 include 'db_connect.php';
+
 $message = "";
 $error = "";
 
@@ -58,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>إنشاء حساب جديد - منصة وصلة</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
+        body { background: linear-gradient(135deg, #e0f2fe, #fdfbf7); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
         .register-card { background: #ffffff; padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
         .logo-container { margin-bottom: 10px; }
         .app-logo { max-width: 150px; height: auto; object-fit: contain; }
