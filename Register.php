@@ -1,6 +1,5 @@
 <?php
 include 'db_connect.php';
-
 $message = "";
 $error = "";
 
@@ -67,13 +66,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group { text-align: right; margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #334155; font-size: 13px; font-weight: 600; }
         .form-group input, .form-group select { width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; background-color: #fff; }
-        .form-group input:focus, .form-group select:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
-        .btn-submit { width: 100%; padding: 12px; background-color: #0284c7; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .form-group input:focus, .form-group select:focus { border-color: #4776a8; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+        .btn-submit { width: 100%; padding: 12px; background-color: #4776a8; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { background-color: #0369a1; }
         .error-box { background-color: #fef2f2; color: #dc2626; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fecaca; }
         .success-box { background-color: #f0fdf4; color: #16a34a; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #bbf7d0; }
         .footer-links { margin-top: 18px; font-size: 14px; color: #64748b; }
-        .footer-links a { color: #0284c7; text-decoration: none; font-weight: bold; }
+        .footer-links a { color: #4776a8; text-decoration: none; font-weight: bold; }
         .footer-links a:hover { text-decoration: underline; }
     </style>
 </head>
