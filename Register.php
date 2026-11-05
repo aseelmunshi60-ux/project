@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role      = trim($_POST['role']); // guardian أو teacher
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
-        $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
+        $check = $conn->prepare("SELECT user_id FROM user WHERE email = ?");
         $check->bind_param("s", $email);
         $check->execute();
         $check_result = $check->get_result();
@@ -20,8 +20,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($check_result->num_rows > 0) {
             $error = "البريد الإلكتروني مستخدم بالفعل!";
         } else {
-            $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssss", $full_name, $email, $phone, $password, $role);
+            $stmt = $conn->prepare("INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, ?)");
+              $stmt->bind_param("ssss", $full_name, $email, $password, $role);
 
             if ($stmt->execute()) {
                 $user_id = $stmt->insert_id;
