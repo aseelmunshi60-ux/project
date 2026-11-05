@@ -8,21 +8,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     if (!empty($email) && !empty($password)) {
-        $stmt =$conn->prepare("SELECT * FROM user WHERE (email = ? OR phone = ?) AND password = ?");
-        $stmt->bind_param("sss", $email,$email, $password);$stmt->execute();
+        $stmt =$conn->prepare("SELECT * FROM user WHERE (email = ?)AND password = ?");
+        $stmt->bind_param("ss",$email, $password);$stmt->execute();
         $result =$stmt->get_result();
 
         if ($result->num_rows > 0) {
             $user =$result->fetch_assoc();
             
-            if ($user['role'] == 'guardian') { header("Location: guardian_dashboard.php"); } elseif ($user['role'] == 'teacher') {
-                header("Location: teacher_dashboard.php");
+            if ($user['role'] == 'guardian') { header("Location: index.php"); } elseif ($user['role'] == 'teacher') {
+                header("Location: index.php");
             } else {
                 header("Location: index.php");
             }
             exit();
         } else {
-            $error_message = "البريد الإلكتروني / رقم الجوال أو كلمة المرور غير صحيحة!";
+            $error_message = "البريد الإلكتروني أو كلمة المرور غير صحيحة!";
         }
         $stmt->close();
     } else {
@@ -70,8 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <form method="POST" action="">
         <div class="form-group">
-            <label>رقم الجوال أو البريد</label>
-            <input type="text" name="email" placeholder="أدخل البريد أو الرقم" required>
+            <label> البريد</label>
+            <input type="text" name="email" placeholder="أدخل البريد " required>
         </div>
 
         <div class="form-group">
