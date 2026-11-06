@@ -16,7 +16,7 @@ $avatar = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r
 
 $nav = [
     ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
-    ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lessons.php',  'icon' => '✋'],
+    ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lesson.php',  'icon' => '✋'],
     ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'index.php',    'icon' => '⌂'],
     ['key' => 'games',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
     ['key' => 'users',    'label' => 'المستخدمين','href' => 'users.php',    'icon' => '👥'],
