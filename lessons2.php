@@ -31,7 +31,7 @@ $lessons = [
 $items = [
     ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
     ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lessons.php',  'icon' => '✋'],
-    ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'index.php',     'icon' => '⌂'],
+    ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'home.php',     'icon' => '⌂'],
     ['key' => 'games',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
     ['key' => 'students', 'label' => 'الطلاب',    'href' => 'student.php', 'icon' => '👥'],
 ];
