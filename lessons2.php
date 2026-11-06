@@ -29,11 +29,11 @@ $lessons = [
 ];
 
 $items = [
-    ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'settings.php', 'icon' => '⚙'],
+    ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
     ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lessons.php',  'icon' => '✋'],
     ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'home.php',     'icon' => '⌂'],
-    ['key' => 'games',    'label' => 'الالعاب',   'href' => 'games.php',    'icon' => '🎮'],
-    ['key' => 'students', 'label' => 'الطلاب',    'href' => 'students.php', 'icon' => '👥'],
+    ['key' => 'games',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
+    ['key' => 'students', 'label' => 'الطلاب',    'href' => 'student.php', 'icon' => '👥'],
 ];
 
 function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
