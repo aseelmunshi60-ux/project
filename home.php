@@ -266,10 +266,10 @@ body {
   </section>
 
   <section class="tiles">
-    <a class="tile pink" href="games.php"><span class="ic">🎮</span>إدارة الالعاب</a>
-    <a class="tile green" href="lessons.php"><span class="ic">✋</span>إدارة الدروس</a>
-    <a class="tile blue" href="settings.php"><span class="ic">⚙</span>الإعدادات</a>
-    <a class="tile yellow" href="students.php"><span class="ic">👥</span>الطلاب</a>
+    <a class="tile pink" href="game.php"><span class="ic">🎮</span>إدارة الالعاب</a>
+    <a class="tile green" href="lessons2.php"><span class="ic">✋</span>إدارة الدروس</a>
+    <a class="tile blue" href="profile.php"><span class="ic">⚙</span>الإعدادات</a>
+    <a class="tile yellow" href="student.php"><span class="ic">👥</span>الطلاب</a>
   </section>
 
   <h2 class="section-title">الاشعارات:</h2>
