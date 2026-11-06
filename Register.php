@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role      = trim($_POST['role']); // guardian أو teacher
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
-        $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
+        $check = $conn->prepare("SELECT user_id FROM user WHERE email = ?");
         $check->bind_param("s", $email);
         $check->execute();
         $check_result = $check->get_result();
@@ -20,8 +20,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($check_result->num_rows > 0) {
             $error = "البريد الإلكتروني مستخدم بالفعل!";
         } else {
-            $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssss", $full_name, $email, $phone, $password, $role);
+            $stmt = $conn->prepare("INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, ?)");
+              $stmt->bind_param("ssss", $full_name, $email, $password, $role);
 
             if ($stmt->execute()) {
                 $user_id = $stmt->insert_id;
@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>إنشاء حساب جديد - منصة وصلة</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #e0f2fe, #bae6fd); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
+        body { background: linear-gradient(135deg, #e0f2fe, #fdfbf7); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
         .register-card { background: #ffffff; padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
         .logo-container { margin-bottom: 10px; }
         .app-logo { max-width: 150px; height: auto; object-fit: contain; }
@@ -67,13 +67,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group { text-align: right; margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #334155; font-size: 13px; font-weight: 600; }
         .form-group input, .form-group select { width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; background-color: #fff; }
-        .form-group input:focus, .form-group select:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
-        .btn-submit { width: 100%; padding: 12px; background-color: #0284c7; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .form-group input:focus, .form-group select:focus { border-color: #4776a8; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+        .btn-submit { width: 100%; padding: 12px; background-color: #4776a8; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { background-color: #0369a1; }
         .error-box { background-color: #fef2f2; color: #dc2626; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fecaca; }
         .success-box { background-color: #f0fdf4; color: #16a34a; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #bbf7d0; }
         .footer-links { margin-top: 18px; font-size: 14px; color: #64748b; }
-        .footer-links a { color: #0284c7; text-decoration: none; font-weight: bold; }
+        .footer-links a { color: #4776a8; text-decoration: none; font-weight: bold; }
         .footer-links a:hover { text-decoration: underline; }
     </style>
 </head>
