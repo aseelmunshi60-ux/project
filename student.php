@@ -1,5 +1,5 @@
 <?php
-$students = [
+$student = [
   ['name' => 'احمد',    'grade' => 80,  'skills' => 70,  'present' => true,
    'details' => ['دقة الحركات' => 80, 'المواظبة' => 100, 'سرعة الاتقان' => 30]],
   ['name' => 'عبدالله', 'grade' => 60,  'skills' => 30,  'present' => false,
