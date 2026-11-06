@@ -4,7 +4,7 @@ include 'db_connect.php';
     <h1>مشروع وصلة</h1>
     <nav>
         <a href="index.php">الرئيسية</a>
-        <a href="lessons.php">قائمة الدروس</a>
+        <a href="lesson.php">قائمة الدروس</a>
         <?php if(isset($_SESSION['user_id'])): ?>
             <a href="logout.php">تسجيل الخروج</a>
         <?php else: ?>
