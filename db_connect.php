@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$dbname = "interctive_sign_language"; // اسم قاعدة البيانات الخاصة بكم
+$dbname = "intearctive_sign_language"; // اسم قاعدة البيانات الخاصة بكم
 
 $conn = mysqli_connect($host, $user, $password, $dbname);
 
