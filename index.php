@@ -20,10 +20,10 @@ include 'db_connect.php';
             <div class="logo-title">منصة وصلة التعليمية</div>
             <nav class="nav-links">
                 <a href="index.php" class="active">الرئيسية</a>
-                <a href="lessons.php">الدروس</a>
-                <a href="games.php">الألعاب</a>
-                <a href="achievements.php">الإنجازات</a>
-                <a href="settings.php">الإعدادات</a>
+                <a href="lesson.php">الدروس</a>
+                <a href="game.php">الألعاب</a>
+                <a href="Report.php">الإنجازات</a>
+                <a href="profile.php">الإعدادات</a>
                 
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <a href="logout.php" class="auth-btn">تسجيل الخروج</a>
@@ -47,25 +47,25 @@ include 'db_connect.php';
             <div class="card">
                 <h3>الدروس 📚</h3>
                 <p>تعلم الحروف، الأرقام والكلمات بطريقة تفاعلية وممتعة.</p>
-                <a href="lessons.php" class="card-btn">استعرض الدروس</a>
+                <a href="lesson.php" class="card-btn">استعرض الدروس</a>
             </div>
 
             <div class="card">
                 <h3>الألعاب 🎮</h3>
                 <p>العب وتحدّ نفسك على تنمية المهارات الأساسية.</p>
-                <a href="games.php" class="card-btn">ابدأ اللعب</a>
+                <a href="game.php" class="card-btn">ابدأ اللعب</a>
             </div>
 
             <div class="card">
                 <h3>الإنجازات 🏆</h3>
                 <p>تابع مستواك، أوسمتك، والأنشطة التي حصلت عليها.</p>
-                <a href="achievements.php" class="card-btn">عرض الإنجازات</a>
+                <a href="Report.php" class="card-btn">عرض الإنجازات</a>
             </div>
 
             <div class="card">
                 <h3>الإعدادات ⚙️</h3>
                 <p>إدارة الحساب، والكلمات، وتخصيص الطابع.</p>
-                <a href="settings.php" class="card-btn">الإعدادات</a>
+                <a href="profile.php" class="card-btn">الإعدادات</a>
             </div>
         </section>
 
