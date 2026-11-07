@@ -97,7 +97,7 @@ $stars = max(0, min(3, $stars));
     <a href="lessons.php"><i>✋</i>الدروس</a>
     <a href="index.php" class="home"><i>🏠</i>الرئيسية</a>
     <a href="games.php" class="active"><i>🎮</i>الالعاب</a>
-    <a href="students.php"><i>👥</i>الطلاب</a>
+    <a href="student.php"><i>👥</i>الطلاب</a>
   </nav>
 </div>
 </body>

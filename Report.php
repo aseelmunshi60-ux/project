@@ -361,9 +361,9 @@ function e($value): string
     </section>
 
     <nav aria-label="التنقل الرئيسي">
-        <a href="settings.php" aria-label="الإعدادات">⚙️</a>
+        <a href="profile.php" aria-label="الإعدادات">⚙️</a>
         <a href="index.php" class="home" aria-label="الرئيسية">🏠</a>
-        <a href="achievements.php" aria-label="الإنجازات">🏆</a>
+        <a href="Report.php" aria-label="الإنجازات">🏆</a>
     </nav>
 
 </div>

@@ -1,5 +1,5 @@
 <?php
-$students = [
+$student = [
   ['name' => 'احمد',    'grade' => 80,  'skills' => 70,  'present' => true,
    'details' => ['دقة الحركات' => 80, 'المواظبة' => 100, 'سرعة الاتقان' => 30]],
   ['name' => 'عبدالله', 'grade' => 60,  'skills' => 30,  'present' => false,
@@ -117,7 +117,7 @@ function bar($percent) {
     <a href="lessons.php"><i>✋</i>الدروس</a>
     <a href="index.php" class="home"><i>🏠</i>الرئيسية</a>
     <a href="game.php"><i>🎮</i>الالعاب</a>
-    <a href="students.php" class="active"><i>👥</i>الطلاب</a>
+    <a href="student.php" class="active"><i>👥</i>الطلاب</a>
   </nav>
 </div>
 </body>
