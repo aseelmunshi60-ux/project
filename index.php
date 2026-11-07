@@ -20,10 +20,10 @@ include 'db_connect.php';
             <div class="logo-title">منصة وصلة التعليمية</div>
             <nav class="nav-links">
                 <a href="index.php" class="active">الرئيسية</a>
-                <a href="lessons.php">الدروس</a>
-                <a href="games.php">الألعاب</a>
-                <a href="achievements.php">الإنجازات</a>
-                <a href="settings.php">الإعدادات</a>
+                <a href="lesson.php">الدروس</a>
+                <a href="game.php">الألعاب</a>
+                <a href="Report.php">الإنجازات</a>
+                <a href="profile.php">الإعدادات</a>
                 
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <a href="logout.php" class="auth-btn">تسجيل الخروج</a>
