@@ -7,9 +7,8 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
-    $phone     = trim($_POST['phone']);
     $password  = trim($_POST['password']);
-    $role      = trim($_POST['role']); // guardian أو teacher
+    $role      = trim($_POST['role']); 
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
         $check = $conn->prepare("SELECT user_id FROM user WHERE email = ?");
@@ -21,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $error = "البريد الإلكتروني مستخدم بالفعل!";
         } else {
             $stmt = $conn->prepare("INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, ?)");
-              $stmt->bind_param("ssss", $full_name, $email, $password, $role);
+            $stmt->bind_param("ssss", $full_name, $email, $password, $role);
 
             if ($stmt->execute()) {
                 $user_id = $stmt->insert_id;
@@ -102,11 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="form-group">
             <label>البريد الإلكتروني</label>
             <input type="email" name="email" placeholder="example@mail.com" required>
-        </div>
-
-        <div class="form-group">
-            <label>رقم الجوال</label>
-            <input type="text" name="phone" placeholder="05xxxxxxxx">
+            <input type="password" name="password" placeholder="••••••••" required>
         </div>
 
         <div class="form-group">
@@ -120,6 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="" disabled selected>اختر نوع الحساب</option>
                 <option value="guardian">ولي أمر</option>
                 <option value="teacher">معلم</option>
+                <option value="admin">مدير (أدمن)</option>
             </select>
         </div>
 
