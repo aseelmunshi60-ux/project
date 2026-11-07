@@ -8,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = trim($_POST['full_name']);
     $email     = trim($_POST['email']);
     $password  = trim($_POST['password']);
-    $role      = trim($_POST['role']); 
+    $role      = trim($_POST['role']); // guardian أو teacher أو admin
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
         $check = $conn->prepare("SELECT user_id FROM user WHERE email = ?");
@@ -101,7 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="form-group">
             <label>البريد الإلكتروني</label>
             <input type="email" name="email" placeholder="example@mail.com" required>
-            <input type="password" name="password" placeholder="••••••••" required>
         </div>
 
         <div class="form-group">
