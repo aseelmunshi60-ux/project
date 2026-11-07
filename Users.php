@@ -15,10 +15,10 @@ function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 $avatar = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>';
 
 $nav = [
-    ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
+    ['key' => 'profile', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
     ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lesson.php',  'icon' => '✋'],
     ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'index.php',    'icon' => '⌂'],
-    ['key' => 'games',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
+    ['key' => 'game',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
     ['key' => 'users',    'label' => 'المستخدمين','href' => 'users.php',    'icon' => '👥'],
 ];
 ?>
