@@ -1,16 +1,14 @@
 <?php
-$host = "localhost";
-$user = "root";
+$servername = "localhost";
+$username = "root";
 $password = "";
-$dbname = "intearctive_sign_language"; // اسم قاعدة البيانات الخاصة بكم
+$dbname = "interactive_sign_language";
 
-$conn = mysqli_connect($host, $user, $password, $dbname);
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-// التحقق من الاتصال
 if (!$conn) {
     die("فشل الاتصال بقاعدة البيانات: " . mysqli_connect_error());
 }
 
-// ضبط الترميز ليدعم اللغة العربية
 mysqli_set_charset($conn, "utf8");
 ?>
