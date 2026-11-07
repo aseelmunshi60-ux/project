@@ -1,5 +1,7 @@
 <?php
 include 'db_connect.php';
+?>
+    <link rel="stylesheet" href="style.css">
 <header>
     <h1>مشروع وصلة</h1>
     <nav>
@@ -18,7 +20,7 @@ include 'db_connect.php';
 
     <div class="lessons-grid">
         <?php
-        if ($result && $result->num_rows > 0) {
+        if (@$result && $result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
                 echo '<div class="lesson-card">';
                 echo '  <div class="lesson-card-body">';
@@ -32,7 +34,7 @@ include 'db_connect.php';
             }
         } else {
             // دروس افتراضية للعرض عند بدء التشغيل وقبل ملء الجدول
-            echo '
+            echo'
             <div class="lesson-card">
                 <div class="lesson-card-body">
                     <h3 class="lesson-title">درس الإشارات الأساسية</h3>
