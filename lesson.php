@@ -1,5 +1,6 @@
 <?php
 include 'db_connect.php';
+<<<<<<< HEAD
 ?>
     <link rel="stylesheet" href="style.css">
 <header>
@@ -35,27 +36,36 @@ include 'db_connect.php';
         } else {
             // دروس افتراضية للعرض عند بدء التشغيل وقبل ملء الجدول
             echo'
+=======
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>قائمة الدروس</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>قائمة الدروس التعليمية</h1>
+        <p>مرحباً بكِ في قسم الدروس الخاصة بالمشروع.</p>
+        
+        <div class="lessons-list">
+>>>>>>> e3c084e615e91cbbdbe3d19f8f78049b4db69e92
             <div class="lesson-card">
-                <div class="lesson-card-body">
-                    <h3 class="lesson-title">درس الإشارات الأساسية</h3>
-                    <p class="lesson-desc">تعلم أهم الإشارات والتطبيقات بشكل مبسط وتفاعلي للأطفال.</p>
-                </div>
-                <div class="lesson-card-footer">
-                    <a href="#" class="btn-view">عرض الدرس</a>
-                </div>
+                <h3>الدرس الأول: مقدمة في تطوير الويب</h3>
+                <p>تعرفي على أساسيات بناء وتطوير صفحات وتجارب الاستخدام التفاعلية.</p>
             </div>
             
             <div class="lesson-card">
-                <div class="lesson-card-body">
-                    <h3 class="lesson-title">درس الحروف والأرقام</h3>
-                    <p class="lesson-desc">مجموعة من الأنشطة التفاعلية والتمارين الخاصة بالحروف والكلمات.</p>
-                </div>
-                <div class="lesson-card-footer">
-                    <a href="#" class="btn-view">عرض الدرس</a>
-                </div>
+                <h3>الدرس الثاني: قواعد البيانات و SQL</h3>
+                <p>كيفية ربط الموقع بقاعدة البيانات واسترجاع البيانات بكفاءة.</p>
             </div>
-            ';
-        }
-        ?>
-    </div>
         </div>
+
+        <br>
+        <a href="index.php">العودة للرئيسية</a>
+    </div>
+</body>
+</html>
