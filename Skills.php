@@ -1,5 +1,6 @@
 <?php
-
+seession_start();
+include  'db_connect.php';
 $skills = [
     ['name' => 'الحروف', 'value' => 95],
     ['name' => 'الأرقام', 'value' => 60],
