@@ -1,4 +1,6 @@
 <?php
+seession_start();
+include  'db_connect.php';
 $student = [
   ['name' => 'احمد',    'grade' => 80,  'skills' => 70,  'present' => true,
    'details' => ['دقة الحركات' => 80, 'المواظبة' => 100, 'سرعة الاتقان' => 30]],
