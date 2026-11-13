@@ -1,4 +1,6 @@
 <?php
+seession_start();
+include  'db_connect.php';
 $game = [
   'title'    => 'لعبة: قلّد الإشارة',
   'letter'   => 'ا',
