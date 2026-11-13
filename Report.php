@@ -1,5 +1,6 @@
 <?php
-
+seession_start();
+include  'db_connect.php';
 $child = [
     'name'        => 'أحمد',
     'completion'  => 75,
