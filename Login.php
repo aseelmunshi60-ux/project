@@ -1,4 +1,5 @@
 <?php
+session_start(); 
 include 'db_connect.php';
 
 $error_message = "";
@@ -8,15 +9,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     if (!empty($email) && !empty($password)) {
-        $stmt =$conn->prepare("SELECT * FROM user WHERE (email = ?)AND password = ?");
-        $stmt->bind_param("ss",$email, $password);$stmt->execute();
-        $result =$stmt->get_result();
+        $stmt = $conn->prepare("SELECT * FROM user WHERE email = ? AND password = ?");
+        $stmt->bind_param("ss", $email, $password);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $user =$result->fetch_assoc();
+            $user = $result->fetch_assoc();
             
-            if ($user['role'] == 'guardian') { header("Location: index.php"); } elseif ($user['role'] == 'teacher') {
-                header("Location: index.php");
+            $_SESSION['user_id'] = $user['user_id']; 
+            $_SESSION['name'] = $user['name'];
+            $_SESSION['role'] = $user['role'];
+
+            if ($user['role'] == 'teacher') {
+                header("Location: home.php");
+            } elseif ($user['role'] == 'admin') {
+                header("Location: Users.php");
             } else {
                 header("Location: index.php");
             }
@@ -49,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .form-group input { width: 100%; padding: 12px 15px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s; }
         .form-group input:focus { border-color: #4776a8; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
         .btn-submit { width: 100%; padding: 12px; background-color: #4776a8; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-submit:hover { background-color: #4776a8; }
+        .btn-submit:hover { background-color: #0369a1; }
         .error-box { background-color: #fef2f2; color: #dc2626; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fecaca; }
         .footer-links { margin-top: 20px; font-size: 14px; color: #64748b; }
         .footer-links a { color: #4776a8; text-decoration: none; font-weight: bold; }
@@ -70,8 +78,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <form method="POST" action="">
         <div class="form-group">
-            <label> البريد</label>
-            <input type="text" name="email" placeholder="أدخل البريد " required>
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" placeholder="أدخل البريد" required>
         </div>
 
         <div class="form-group">

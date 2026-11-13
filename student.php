@@ -113,9 +113,9 @@ function bar($percent) {
   </div>
 
   <nav>
-    <a href="settings.php"><i>⚙️</i>الإعدادات</a>
-    <a href="lessons.php"><i>✋</i>الدروس</a>
-    <a href="index.php" class="home"><i>🏠</i>الرئيسية</a>
+    <a href="profile.php"><i>⚙️</i>الإعدادات</a>
+    <a href="lesson.php"><i>✋</i>الدروس</a>
+    <a href="home.php" class="home"><i>🏠</i>الرئيسية</a>
     <a href="game.php"><i>🎮</i>الالعاب</a>
     <a href="student.php" class="active"><i>👥</i>الطلاب</a>
   </nav>

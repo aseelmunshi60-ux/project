@@ -9,11 +9,11 @@ $notifications = [
 ];
 
 $items = [
-    ['key' => 'settings', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
+    ['key' => 'profile', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
     ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lessons.php',  'icon' => '✋'],
     ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'home.php',     'icon' => '⌂'],
-    ['key' => 'games',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
-    ['key' => 'students', 'label' => 'الطلاب',    'href' => 'student.php', 'icon' => '👥'],
+    ['key' => 'game',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
+    ['key' => 'student', 'label' => 'الطلاب',    'href' => 'student.php', 'icon' => '👥'],
 ];
 
 function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
@@ -266,10 +266,10 @@ body {
   </section>
 
   <section class="tiles">
-    <a class="tile pink" href="games.php"><span class="ic">🎮</span>إدارة الالعاب</a>
-    <a class="tile green" href="lessons.php"><span class="ic">✋</span>إدارة الدروس</a>
-    <a class="tile blue" href="settings.php"><span class="ic">⚙</span>الإعدادات</a>
-    <a class="tile yellow" href="students.php"><span class="ic">👥</span>الطلاب</a>
+    <a class="tile pink" href="game.php"><span class="ic">🎮</span>إدارة الالعاب</a>
+    <a class="tile green" href="lessons2.php"><span class="ic">✋</span>إدارة الدروس</a>
+    <a class="tile blue" href="profile.php"><span class="ic">⚙</span>الإعدادات</a>
+    <a class="tile yellow" href="student.php"><span class="ic">👥</span>الطلاب</a>
   </section>
 
   <h2 class="section-title">الاشعارات:</h2>
