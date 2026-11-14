@@ -1,5 +1,5 @@
 <?php
-seession_start();
+session_start();
 include  'db_connect.php';
 $student = [
   ['name' => 'احمد',    'grade' => 80,  'skills' => 70,  'present' => true,
