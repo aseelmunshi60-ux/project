@@ -1,5 +1,5 @@
 <?php
-seession_start();
+session_start();
 include  'db_connect.php';
 $game = [
   'title'    => 'لعبة: قلّد الإشارة',
