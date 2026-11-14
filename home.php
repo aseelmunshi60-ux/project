@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'db_connect.php';
 $current = 'home';
 $userName = $_SESSION['user_name'] ?? 'المعلم';
 
