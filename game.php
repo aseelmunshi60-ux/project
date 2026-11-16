@@ -1,106 +1,370 @@
 <?php
-session_start();
-include  'db_connect.php';
-$game = [
-  'title'    => 'لعبة: قلّد الإشارة',
-  'letter'   => 'ا',
-  'match'    => 70,
-  'score'    => 10,
-];
-$stars = (int) round($game['match'] / 100 * 5 * 0.86);
-$stars = max(0, min(3, $stars));
+// إظهار الأخطاء لتسهيل التتبع
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// منع تكرار الجلسة واستدعاء الاتصال بقاعدة البيانات
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'db_connect.php';
+
+function e($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= htmlspecialchars($game['title']) ?></title>
+<title>لعبة قلّد الإشارة - منصة وصلة التعليمية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Tajawal',sans-serif;background:#222;display:flex;justify-content:center;min-height:100vh}
-  .app{width:100%;max-width:400px;min-height:100vh;position:relative;padding-bottom:110px;
-       background:linear-gradient(180deg,#bff3ee 0%,#fff3c4 45%,#f6d9ee 100%)}
-  header{display:flex;align-items:center;justify-content:center;position:relative;padding:18px 16px 10px}
-  header h1{font-size:24px;font-weight:800}
-  .back{position:absolute;right:16px;top:16px;font-size:26px;text-decoration:none;color:#000;font-weight:800}
-  .menu{position:absolute;left:16px;top:18px;width:32px;height:32px;border-radius:50%;border:2px solid #111;
-        background:#fff;font-weight:800;display:grid;place-items:center;cursor:pointer}
-  .actions{display:flex;gap:12px;padding:12px 14px}
-  .btn{flex:1;padding:12px;border:2px solid #8aa;border-radius:16px;font:700 15px 'Tajawal';
-       display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
-  .btn.blue{background:#b9d3ff;border-color:#7fa6e6}
-  .btn.green{background:#bff0b4;border-color:#8cd37e}
-  .panel{background:#fff;border-radius:24px;margin:12px 16px;padding:16px;box-shadow:0 4px 12px #0001}
-  .sign{height:190px;display:flex;flex-direction:column;justify-content:space-between}
-  .sign .letter{flex:1;display:grid;place-items:center;font-size:110px;font-weight:800}
-  .feedback{display:flex;align-items:center;justify-content:space-between}
-  .feedback small{display:block;font-size:11px;font-weight:700}
-  .pct{font-size:20px;font-weight:800;color:#3c9d49}
-  .stars{color:#f5b301;font-size:20px;letter-spacing:2px}
-  .stars .off{color:#bbb}
-  .answer{display:flex;gap:8px}
-  .circle{width:34px;height:34px;border-radius:50%;border:2px solid #333;font-size:18px;font-weight:800;cursor:pointer}
-  .circle.ok{background:#b9f5b0;color:#1a7a22}
-  .circle.no{background:#ff9f9f;color:#a11}
-  .trophy{text-align:center;padding:24px 16px;
-          background:repeating-conic-gradient(#fde8ea 0 25%,#fff 0 50%) 0 0/60px 60px;border-radius:24px}
-  .trophy .cup{font-size:110px;line-height:1}
-  .trophy h2{font-size:28px;font-weight:800;margin-top:8px;background:#fffc;display:inline-block;padding:0 12px;border-radius:12px}
-  nav{position:fixed;bottom:0;width:100%;max-width:400px;display:flex;justify-content:space-around;align-items:flex-end;
-      padding:10px 6px 12px;background:linear-gradient(180deg,#d9f7f3,#bff3ee);border-top:1px solid #0001}
-  nav a{text-decoration:none;color:#000;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px}
-  nav a i{font-style:normal;font-size:24px}
-  nav a.home i{width:64px;height:64px;border-radius:50%;background:#b8f0ea;border:3px solid #fff;
-               display:grid;place-items:center;margin-top:-34px;font-size:30px;box-shadow:0 4px 10px #0002}
-  nav a.active i{background:#fff;border-radius:50%;width:38px;height:38px;display:grid;place-items:center}
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Tajawal', sans-serif;
+        min-height: 100vh;
+        background-color: #f8fafc;
+        color: #1e293b;
+    }
+
+    /* شريط التنقل العلوي الموحد */
+    .navbar {
+        width: 100%;
+        background-color: #111827;
+        color: #ffffff;
+        padding: 14px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar .brand {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .navbar nav {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .navbar nav a {
+        text-decoration: none;
+        color: #cbd5e1;
+        font-weight: 500;
+        font-size: 15px;
+        transition: color 0.2s;
+    }
+
+    .navbar nav a:hover,
+    .navbar nav a.active {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .navbar .btn-login,
+    .navbar .btn-logout {
+        background-color: #2563eb;
+        color: #ffffff !important;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    /* حاوية المحتوى الرئيسي */
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font: 700 14px 'Tajawal';
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        background: #ffffff;
+        color: #1e293b;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: background 0.2s;
+    }
+
+    .btn:hover {
+        background: #f1f5f9;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+    }
+
+    .panel {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .sign {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 240px;
+    }
+
+    .sign .letter {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        font-size: 90px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .feedback {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 16px;
+    }
+
+    .feedback small {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    .pct {
+        font-size: 22px;
+        font-weight: 800;
+        color: #16a34a;
+    }
+
+    .stars {
+        color: #eab308;
+        font-size: 20px;
+        letter-spacing: 2px;
+    }
+
+    .stars .off {
+        color: #cbd5e1;
+    }
+
+    .answer {
+        display: flex;
+        gap: 10px;
+    }
+
+    .circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        font-size: 18px;
+        font-weight: 800;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.1s;
+    }
+
+    .circle:active {
+        transform: scale(0.95);
+    }
+
+    .circle.ok {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .circle.no {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .trophy {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .trophy .cup {
+        font-size: 70px;
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+
+    .trophy h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+        background: #ffffff;
+        padding: 6px 20px;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 768px) {
+        .navbar {
+            padding: 14px 20px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+    }
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <a class="back" href="games.php" aria-label="رجوع">›</a>
-    <h1><?= htmlspecialchars($game['title']) ?></h1>
-    <div class="menu">•••</div>
-  </header>
 
-  <div class="actions">
-    <button class="btn blue">✎ تحرير اللعبة</button>
-    <button class="btn green">⌄ تقدم الطلاب</button>
-  </div>
+    <!-- شريط التنقل العلوي -->
+    <header class="navbar">
+        <div class="brand">منصة وصلة التعليمية</div>
+        <nav aria-label="التنقل الرئيسي">
+            <a href="index.php">الرئيسية</a>
+            <a href="lesson.php">الدروس</a>
+            <a href="games.php" class="active">الألعاب</a>
+            <a href="Report.php">الإنجازات</a>
+            <a href="profile.php">الإعدادات</a>
 
-  <section class="panel sign">
-    <div class="letter"><?= htmlspecialchars($game['letter']) ?></div>
-    <div class="feedback">
-      <div>
-        <small>نتيجة التطابق</small>
-        <span class="pct"><?= $game['match'] ?>%</span>
-        <span class="stars">
-          <?php for ($i = 0; $i < 3; $i++): ?>
-            <span class="<?= $i < $stars ? '' : 'off' ?>">★</span>
-          <?php endfor; ?>
-        </span>
-      </div>
-      <div class="answer">
-        <button class="circle ok" aria-label="صح">✓</button>
-        <button class="circle no" aria-label="خطأ">✕</button>
-      </div>
-    </div>
-  </section>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="logout.php" class="btn-logout">تسجيل الخروج</a>
+            <?php else: ?>
+                <a href="login.php" class="btn-login">تسجيل الدخول</a>
+            <?php endif; ?>
+        </nav>
+    </header>
 
-  <section class="panel trophy">
-    <div class="cup">🏆</div>
-    <h2>Score <?= (int) $game['score'] ?></h2>
-  </section>
+    <!-- محتوى الصفحة التفاعلية -->
+    <main class="container">
+        
+        <div class="page-header">
+            <h1 id="game-title">لعبة: قلّد الإشارة</h1>
+            <div class="actions">
+                <button class="btn" onclick="resetGame()">🔄 إعادة اللعبة</button>
+            </div>
+        </div>
 
-  <nav>
-    <a href="profile.php"><i>⚙️</i>الإعدادات</a>
-    <a href="lesson.php"><i>✋</i>الدروس</a>
-    <a href="home.php" class="home"><i>🏠</i>الرئيسية</a>
-    <a href="game.php" class="active"><i>🎮</i>الالعاب</a>
-    <a href="student.php"><i>👥</i>الطلاب</a>
-  </nav>
-</div>
+        <div class="dashboard-grid">
+            <!-- لوحة الإشارة والتفاعل -->
+            <section class="panel sign">
+                <div class="letter" id="letter-display">ا</div>
+                <div class="feedback">
+                    <div>
+                        <small>نتيجة التطابق</small>
+                        <span class="pct" id="pct-display">70%</span>
+                        <span class="stars" id="stars-display">★★★</span>
+                    </div>
+                    <div class="answer">
+                        <button class="circle ok" onclick="answerGame(true)" aria-label="صح">✓</button>
+                        <button class="circle no" onclick="answerGame(false)" aria-label="خطأ">✕</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- لوحة النقاط والكأس -->
+            <section class="panel trophy">
+                <div class="cup">🏆</div>
+                <h2 id="score-display">Score 10</h2>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        const levels = [
+            { letter: 'ا', match: 85, scoreInc: 10 },
+            { letter: 'ب', match: 90, scoreInc: 15 },
+            { letter: 'ت', match: 75, scoreInc: 10 },
+            { letter: 'ث', match: 95, scoreInc: 20 },
+            { letter: 'ج', match: 80, scoreInc: 15 }
+        ];
+
+        let currentIndex = 0;
+        let totalScore = 10;
+
+        function updateUI() {
+            const current = levels[currentIndex];
+            document.getElementById('letter-display').textContent = current.letter;
+            document.getElementById('pct-display').textContent = current.match + '%';
+            document.getElementById('score-display').textContent = 'Score ' + totalScore;
+
+            let starCount = Math.round((current.match / 100) * 3);
+            let starsHtml = '';
+            for (let i = 0; i < 3; i++) {
+                starsHtml += `<span class="${i < starCount ? '' : 'off'}">★</span>`;
+            }
+            document.getElementById('stars-display').innerHTML = starsHtml;
+        }
+
+        function answerGame(isCorrect) {
+            if (isCorrect) {
+                totalScore += levels[currentIndex].scoreInc;
+                alert('أحسنت! إجابة صحيحة 🎉');
+            } else {
+                alert('حاول مرة أخرى! الإشارة غير مطابقة تماماً ❌');
+            }
+
+            currentIndex = (currentIndex + 1) % levels.length;
+            updateUI();
+        }
+
+        function resetGame() {
+            currentIndex = 0;
+            totalScore = 10;
+            updateUI();
+            alert('تم إعادة اللعبة من جديد!');
+        }
+    </script>
+
 </body>
 </html>
