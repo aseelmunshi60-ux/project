@@ -1,4 +1,6 @@
 <?php
+seession_start();
+include  'db_connect.php';
 $game = [
   'title'    => 'لعبة: قلّد الإشارة',
   'letter'   => 'ا',
@@ -93,11 +95,11 @@ $stars = max(0, min(3, $stars));
   </section>
 
   <nav>
-    <a href="settings.php"><i>⚙️</i>الإعدادات</a>
-    <a href="lessons.php"><i>✋</i>الدروس</a>
-    <a href="index.php" class="home"><i>🏠</i>الرئيسية</a>
-    <a href="games.php" class="active"><i>🎮</i>الالعاب</a>
-    <a href="students.php"><i>👥</i>الطلاب</a>
+    <a href="profile.php"><i>⚙️</i>الإعدادات</a>
+    <a href="lesson.php"><i>✋</i>الدروس</a>
+    <a href="home.php" class="home"><i>🏠</i>الرئيسية</a>
+    <a href="game.php" class="active"><i>🎮</i>الالعاب</a>
+    <a href="student.php"><i>👥</i>الطلاب</a>
   </nav>
 </div>
 </body>

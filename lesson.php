@@ -3,16 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 include 'db_connect.php';
-
-// قائمة الـ 6 دروس الأساسية المعتمدة فقط
-$desired_lessons = [
-    'الحروف',
-    'الأرقام',
-    'الألوان',
-    'المشاعر',
-    'أفراد العائلة',
-    'الكلمات الأساسية'
-];
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -23,10 +13,14 @@ $desired_lessons = [
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <!-- القائمة العلوية -->
     <header class="main-header">
         <div class="nav-container">
+            <!-- الاسم صار على اليمين -->
             <div class="logo-title">منصة وصلة التعليمية</div>
+            
+            <!-- الروابط صارت على اليسار -->
             <nav class="nav-links">
                 <a href="index.php">الرئيسية</a>
                 <a href="lesson.php" class="active">الدروس</a>
@@ -43,37 +37,61 @@ $desired_lessons = [
     </header>
 
     <!-- المحتوى الرئيسي -->
-    <main class="main-container" style="padding: 30px 20px; max-width: 1000px; margin: 0 auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="color: #2c3e50; margin: 0;">قائمة الدروس المتاحة</h2>
-            <a href="add_lesson.php" class="card-btn" style="width: auto; padding: 10px 20px; background: #28a745; color: #fff; text-decoration: none; border-radius: 8px;">+ إضافة درس جديد</a>
-        </div>
+    <main class="container">
+        <h2 class="page-title">قائمة الدروس المتاحة</h2>
 
-        <div class="cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <!-- شبكة الكروت -->
+        <div class="cards-grid">
             <?php
-            foreach ($desired_lessons as $lesson_title) {
-                $safe_title = mysqli_real_escape_string($conn, $lesson_title);
-                $query = "SELECT * FROM lesson WHERE title = '$safe_title' LIMIT 1";
-                $result = mysqli_query($conn, $query);
-                
-                $row = ($result && mysqli_num_rows($result) > 0) ? mysqli_fetch_assoc($result) : null;
-                $id = $row ? (isset($row['lesson_id']) ? $row['lesson_id'] : (isset($row['id']) ? $row['id'] : 0)) : 0;
-                
-                $description = ($row && !empty($row['description'])) ? $row['description'] : 'تعلم إشارات ' . $lesson_title . ' بطريقة ممتعة وتفاعلية وسهلة.';
+            $query = "SELECT * FROM lesson";
+            $result = mysqli_query($conn, $query);
 
-                echo '<div class="card" style="background: #fff; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">';
-                echo '<h3 style="color: #007bff; margin-bottom: 10px;">' . htmlspecialchars($lesson_title) . '</h3>';
-                echo '<p style="color: #666; font-size: 0.95rem; margin-bottom: 15px; line-height: 1.6;">' . htmlspecialchars($description) . '</p>';
-                
-                if ($id > 0) {
-                    echo '<a href="lesson_details.php?id=' . $id . '" class="card-btn" style="display: inline-block; padding: 8px 16px; background: #007bff; color: #fff; text-decoration: none; border-radius: 6px;">عرض الدرس</a>';
-                } else {
-                    echo '<a href="lesson_details.php?title=' . urlencode($lesson_title) . '" class="card-btn" style="display: inline-block; padding: 8px 16px; background: #007bff; color: #fff; text-decoration: none; border-radius: 6px;">عرض الدرس</a>';
+            if ($result && mysqli_num_rows($result) > 0) {
+                while($row = mysqli_fetch_assoc($result)) {
+                    echo '<div class="card">';
+                    echo '    <div>';
+                    echo '        <h3>' . htmlspecialchars($row["title"]) . '</h3>';
+                    echo '        <p>' . htmlspecialchars($row["description"]) . '</p>';
+                    echo '    </div>';
+                    echo '    <a href="lesson_details.php?id=' . $row["id"] . '" class="card-btn">عرض الدرس</a>';
+                    echo '</div>';
                 }
-                echo '</div>';
-            }
+            } else {
             ?>
+                <div class="card">
+                    <div>
+                        <h3>الحروف</h3>
+                        <p>تعلم الحروف الهجائية الأساسية بلغة الإشارة وكيفية تشكيل كل حرف باليد بطريقة ممتعة وسهلة.</p>
+                    </div>
+                    <a href="#" class="card-btn">عرض الدرس</a>
+                </div>
+
+                <div class="card">
+                    <div>
+                        <h3>الأرقام</h3>
+                        <p>اكتشاف طريقة عد الأرقام والتعبير عنها بالإشارات اليدوية لبناء أساس قوي في الرياضيات.</p>
+                    </div>
+                    <a href="#" class="card-btn">عرض الدرس</a>
+                </div>
+
+                <div class="card">
+                    <div>
+                        <h3>الكلمات: المجموعة الأولى</h3>
+                        <p>مجموعة مختارة من الكلمات اليومية الشائعة (مثل التحيات والأشياء القريبة) للتواصل السريع والسهل.</p>
+                    </div>
+                    <a href="#" class="card-btn">عرض الدرس</a>
+                </div>
+
+                <div class="card">
+                    <div>
+                        <h3>الكلمات: المجموعة الثانية</h3>
+                        <p>كلمات إضافية متقدمة ومتنوعة (مثل الألوان والأطعمة والأنشطة) لتوسيع حصيلة المعرفة الإشارية.</p>
+                    </div>
+                    <a href="#" class="card-btn">عرض الدرس</a>
+                </div>
+            <?php } ?>
         </div>
     </main>
+
 </body>
 </html>
