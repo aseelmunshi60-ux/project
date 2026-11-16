@@ -17,10 +17,7 @@ include 'db_connect.php';
     <!-- القائمة العلوية -->
     <header class="main-header">
         <div class="nav-container">
-            <!-- الاسم صار على اليمين -->
             <div class="logo-title">منصة وصلة التعليمية</div>
-            
-            <!-- الروابط صارت على اليسار -->
             <nav class="nav-links">
                 <a href="index.php">الرئيسية</a>
                 <a href="lesson.php" class="active">الدروس</a>
@@ -38,58 +35,30 @@ include 'db_connect.php';
 
     <!-- المحتوى الرئيسي -->
     <main class="container">
-        <h2 class="page-title">قائمة الدروس المتاحة</h2>
-
-        <!-- شبكة الكروت -->
+        <h2>قائمة الدروس المتاحة</h2>
+        
         <div class="cards-grid">
             <?php
-            $query = "SELECT * FROM lesson";
+            // استعلام لجلب الـ 6 دروس المطلوبة فقط بدقة
+            $query = "SELECT * FROM lesson WHERE lesson_id IN (1, 2, 8, 9, 10, 16)";
             $result = mysqli_query($conn, $query);
 
             if ($result && mysqli_num_rows($result) > 0) {
-                while($row = mysqli_fetch_assoc($result)) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $lesson_id = isset($row['lesson_id']) ? $row['lesson_id'] : (isset($row['id']) ? $row['id'] : 1);
+                    $description = !empty($row['description']) ? $row['description'] : 'اضغط على عرض الدرس لمتابعة المحتوى.';
+                    
                     echo '<div class="card">';
-                    echo '    <div>';
-                    echo '        <h3>' . htmlspecialchars($row["title"]) . '</h3>';
-                    echo '        <p>' . htmlspecialchars($row["description"]) . '</p>';
-                    echo '    </div>';
-                    echo '    <a href="lesson_details.php?id=' . $row["id"] . '" class="card-btn">عرض الدرس</a>';
+                    echo '<h3>' . htmlspecialchars($row['title']) . '</h3>';
+                    echo '<p>' . htmlspecialchars($description) . '</p>';
+                    // تم تعديل اسم الملف هنا إلى lesson_detalis.php
+                 echo '<a href="lesson_details.php?id=' . $lesson_id . '" class="btn">عرض الدرس</a>';
                     echo '</div>';
                 }
             } else {
+                echo '<p>لا توجد دروس مضافة حالياً.</p>';
+            }
             ?>
-                <div class="card">
-                    <div>
-                        <h3>الحروف</h3>
-                        <p>تعلم الحروف الهجائية الأساسية بلغة الإشارة وكيفية تشكيل كل حرف باليد بطريقة ممتعة وسهلة.</p>
-                    </div>
-                    <a href="#" class="card-btn">عرض الدرس</a>
-                </div>
-
-                <div class="card">
-                    <div>
-                        <h3>الأرقام</h3>
-                        <p>اكتشاف طريقة عد الأرقام والتعبير عنها بالإشارات اليدوية لبناء أساس قوي في الرياضيات.</p>
-                    </div>
-                    <a href="#" class="card-btn">عرض الدرس</a>
-                </div>
-
-                <div class="card">
-                    <div>
-                        <h3>الكلمات: المجموعة الأولى</h3>
-                        <p>مجموعة مختارة من الكلمات اليومية الشائعة (مثل التحيات والأشياء القريبة) للتواصل السريع والسهل.</p>
-                    </div>
-                    <a href="#" class="card-btn">عرض الدرس</a>
-                </div>
-
-                <div class="card">
-                    <div>
-                        <h3>الكلمات: المجموعة الثانية</h3>
-                        <p>كلمات إضافية متقدمة ومتنوعة (مثل الألوان والأطعمة والأنشطة) لتوسيع حصيلة المعرفة الإشارية.</p>
-                    </div>
-                    <a href="#" class="card-btn">عرض الدرس</a>
-                </div>
-            <?php } ?>
         </div>
     </main>
 
