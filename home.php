@@ -1,303 +1,362 @@
 <?php
-session_start();
+// إظهار الأخطاء لتسهيل التتبع
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include 'db_connect.php';
-$current = 'home';
+
+// قيم افتراضية آمنة
 $userName = $_SESSION['user_name'] ?? 'المعلم';
+$student_count = 0;
+$lesson_count = 0;
 
+// الاتصال بقاعدة البيانات وجلب البيانات الحية بحماية كاملة ضد الأخطاء
+if (isset($conn)) {
+    try {
+        if (isset($_SESSION['user_id'])) {
+            $uid = (int)$_SESSION['user_id'];
+            // محاولة جلب بيانات المعلم بدون افتراض اسم عمود محدد للـ ID
+            $res_user = @mysqli_query($conn, "SELECT * FROM teacher LIMIT 1");
+            if (!$res_user || mysqli_num_rows($res_user) == 0) {
+                $res_user = @mysqli_query($conn, "SELECT * FROM user LIMIT 1");
+            }
+            
+            if ($res_user && mysqli_num_rows($res_user) > 0) {
+                $row_user = mysqli_fetch_assoc($res_user);
+                $userName = $row_user['name'] ?? $row_user['username'] ?? $row_user['fullname'] ?? $userName;
+            }
+        }
+    } catch (Throwable $e) {
+        // تخطي الخطأ بسلاسة واستخدام القيمة الافتراضية
+    }
+
+    try {
+        $res_students = @mysqli_query($conn, "SELECT COUNT(*) as total FROM child");
+        if ($res_students && $row_s = mysqli_fetch_assoc($res_students)) {
+            $student_count = (int)$row_s['total'];
+        }
+    } catch (Throwable $e) {}
+
+    try {
+        $res_lessons = @mysqli_query($conn, "SELECT COUNT(*) as total FROM lesson");
+        if ($res_lessons && $row_l = mysqli_fetch_assoc($res_lessons)) {
+            $lesson_count = (int)$row_l['total'];
+        }
+    } catch (Throwable $e) {}
+}
+
+// الإشعارات والتنبيهات
 $notifications = [
-    ['icon' => '⭐', 'text' => 'قام جميع الطلبة بانهاء الدرس', 'time' => 'منذ ساعة'],
-    ['icon' => '📋', 'text' => 'انتهى موعد تسليم النشاط',     'time' => 'منذ ساعتين'],
-];
-
-$items = [
-    ['key' => 'profile', 'label' => 'الإعدادات', 'href' => 'profile.php', 'icon' => '⚙'],
-    ['key' => 'lessons',  'label' => 'الدروس',    'href' => 'lessons.php',  'icon' => '✋'],
-    ['key' => 'home',     'label' => 'الرئيسية',  'href' => 'home.php',     'icon' => '⌂'],
-    ['key' => 'game',    'label' => 'الالعاب',   'href' => 'game.php',    'icon' => '🎮'],
-    ['key' => 'student', 'label' => 'الطلاب',    'href' => 'student.php', 'icon' => '👥'],
+    ['icon' => '⭐', 'text' => 'تم تحديث سجلات الطلاب والتقييمات بنجاح', 'time' => 'اليوم'],
+    ['icon' => '📋', 'text' => 'هناك دروس جديدة بانتظار المراجعة والاعتماد', 'time' => 'منذ ساعتين'],
 ];
 
 function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
-
-$avatar = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>';
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>الشاشة الرئيسية</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&display=swap" rel="stylesheet">
+<title>لوحة تحكم المعلم - منصة وصلة التعليمية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --ink: #111;
-  --border: #8a8a8a;
-  --blue: #b9d6ff;
-  --green: #b5ffb5;
-  --pink: #ffa8a8;
-  --yellow: #ffffb0;
-  --lavender: #ece4ff;
-  --nav: #b4eeee;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Cairo', Tahoma, sans-serif;
-  background: #e6e6e6;
-  color: var(--ink);
-}
-.app {
-  max-width: 420px;
-  min-height: 100vh;
-  margin: 0 auto;
-  background: linear-gradient(160deg, #d9f7f7 0%, #fff6d6 45%, #ffe3ee 100%);
-  position: relative;
-  padding-bottom: 110px;
-}
-.top {
-  background: linear-gradient(90deg, #b4eeee, #d9f3ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px;
-  position: relative;
-}
-.top h1 { font-size: 26px; font-weight: 800; }
-.round-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid var(--ink);
-  background: #fff;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  text-decoration: none;
-  color: var(--ink);
-  font-weight: 800;
-}
-.round-btn.left { left: 14px; }
-.round-btn.right { right: 14px; border: 0; background: none; font-size: 26px; }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-.pill {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 2px solid var(--border);
-  border-radius: 18px;
-  padding: 8px 10px;
-  text-decoration: none;
-  color: var(--ink);
-  font-weight: 800;
-  font-size: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.25);
-}
-.pill .ic {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #4f7bb0;
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.pill.blue { background: var(--blue); }
-.pill.green { background: var(--green); }
-.pill.green .ic { background: #4f86a8; }
+    body {
+        font-family: 'Tajawal', sans-serif;
+        min-height: 100vh;
+        background-color: #f8fafc;
+        color: #1e293b;
+    }
 
-.bottom {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 420px;
-  height: 72px;
-  background: var(--nav);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 0 6px;
-}
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  text-decoration: none;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 800;
-}
-.nav-item .ic { font-size: 24px; line-height: 1; }
-.nav-item.active .ic {
-  background: #fff;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-}
-.nav-item.home .ic {
-  background: #fff;
-  border: 3px solid var(--nav);
-  outline: 3px solid #fff;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 34px;
-  margin-top: -38px;
-  box-shadow: 0 3px 6px rgba(0,0,0,.3);
-}
+    /* شريط التنقل العلوي الموحد للمنصة */
+    .navbar {
+        width: 100%;
+        background-color: #111827;
+        color: #ffffff;
+        padding: 14px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-.welcome {
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 0 0 22px 22px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 26px 24px;
-  font-size: 22px;
-  font-weight: 800;
-  box-shadow: 0 2px 4px rgba(0,0,0,.2);
-}
-.avatar {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: #d6d6d6;
-  color: #9a9a9a;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.avatar svg { width: 100%; height: 100%; }
-.tiles {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  padding: 36px 16px 20px;
-}
-.tile {
-  height: 112px;
-  border: 2px solid var(--border);
-  border-radius: 22px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-decoration: none;
-  color: var(--ink);
-  font-weight: 800;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.2);
-}
-.tile .ic { font-size: 50px; line-height: 1; }
-.tile.pink { background: var(--pink); }
-.tile.green { background: var(--green); }
-.tile.blue { background: var(--blue); }
-.tile.yellow { background: var(--yellow); }
-.section-title { font-size: 22px; font-weight: 800; padding: 16px 20px 8px; }
-.notes {
-  margin: 0 14px;
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 22px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.note {
-  background: var(--lavender);
-  border-radius: 16px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.note .ic { font-size: 32px; }
-.note .txt { flex: 1; font-weight: 800; font-size: 13px; }
-.note .time { display: block; color: #777; font-weight: 600; font-size: 13px; margin-top: 4px; }
+    .navbar .brand {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        text-decoration: none;
+    }
 
-.actions { display: flex; gap: 14px; padding: 16px 14px 8px; }
-.lessons { padding: 8px 14px; display: flex; flex-direction: column; gap: 22px; }
-.lesson {
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.2);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  text-decoration: none;
-  color: var(--ink);
-  min-height: 118px;
-}
-.lesson .body { flex: 1; }
-.lesson h2 { font-size: 22px; font-weight: 800; }
-.lesson p { font-size: 11px; font-weight: 600; line-height: 1.5; margin-top: 4px; }
-.lesson .hand { font-size: 62px; line-height: 1; }
+    .navbar nav {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .navbar nav a {
+        text-decoration: none;
+        color: #cbd5e1;
+        font-weight: 500;
+        font-size: 15px;
+        transition: color 0.2s;
+    }
+
+    .navbar nav a:hover,
+    .navbar nav a.active {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .navbar .btn-login,
+    .navbar .btn-logout {
+        background-color: #2563eb;
+        color: #ffffff !important;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    /* حاوية المحتوى الرئيسي العريضة */
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .welcome-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+    }
+
+    .welcome-card h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 35px;
+    }
+
+    .tile-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .tile-card .ic {
+        font-size: 36px;
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        display: grid;
+        place-items: center;
+    }
+
+    .tile-card h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .badge-count {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: #dcfce7;
+        color: #15803d;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 15px;
+    }
+
+    .notes-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .note-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .note-item:last-child {
+        border-bottom: none;
+    }
+
+    .note-item .ic {
+        font-size: 24px;
+    }
+
+    .note-item .txt {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .note-item .time {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 500;
+        margin-top: 2px;
+    }
+
+    @media (max-width: 768px) {
+        .navbar {
+            padding: 14px 20px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <header class="top">
-    <h1>الشاشة الرئيسية</h1>
-    <button class="round-btn left" aria-label="المزيد">•••</button>
-  </header>
+    <!-- شريط التنقل العلوي الموحد -->
+    <header class="navbar">
+        <div class="brand">منصة وصلة التعليمية</div>
+        <nav aria-label="التنقل الرئيسي">
+            <a href="home.php" class="active">الرئيسية</a>
+            <a href="lessons2.php">الدروس</a>
+            <a href="game.php">الألعاب</a>
+            <a href="Report.php">الإنجازات</a>
+            <a href="skills.php">المهارات</a>
+            <a href="student.php">الطلاب</a>
+            <a href="profile.php">الإعدادات</a>
 
-  <section class="welcome">
-    <span class="avatar"><?= $avatar ?></span>
-    <span>مرحبا (<?= e($userName) ?>)</span>
-  </section>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="logout.php" class="btn-logout">تسجيل الخروج</a>
+            <?php else: ?>
+                <a href="login.php" class="btn-login">تسجيل الدخول</a>
+            <?php endif; ?>
+        </nav>
+    </header>
 
-  <section class="tiles">
-    <a class="tile pink" href="game.php"><span class="ic">🎮</span>إدارة الالعاب</a>
-    <a class="tile green" href="lessons2.php"><span class="ic">✋</span>إدارة الدروس</a>
-    <a class="tile blue" href="profile.php"><span class="ic">⚙</span>الإعدادات</a>
-    <a class="tile yellow" href="student.php"><span class="ic">👥</span>الطلاب</a>
-  </section>
+    <!-- المحتوى الرئيسي لوحة التحكم -->
+    <main class="container">
+        
+        <section class="welcome-card">
+            <div class="avatar">👨‍🏫</div>
+            <div>
+                <h2 style="margin-bottom: 4px;">مرحباً بك، <?= e($userName) ?></h2>
+                <p style="color: #64748b; font-size: 14px;">لوحة التحكم الخاصة بإدارة الأنشطة والطلاب والمهارات التعليمية</p>
+            </div>
+        </section>
 
-  <h2 class="section-title">الاشعارات:</h2>
-  <section class="notes">
-    <?php foreach ($notifications as $n): ?>
-      <div class="note">
-        <span class="ic"><?= $n['icon'] ?></span>
-        <span class="txt">
-          <?= e($n['text']) ?>
-          <span class="time"><?= e($n['time']) ?></span>
-        </span>
-      </div>
-    <?php endforeach; ?>
-  </section>
+        <h2 class="section-title">أقسام الإدارة والتحكم</h2>
+        <div class="dashboard-grid">
+            <a class="tile-card" href="game.php">
+                <span class="ic">🎮</span>
+                <div>
+                    <h3>إدارة الألعاب</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-top: 2px;">تعديل ومتابعة تفاعلات الألعاب التعليمية</p>
+                </div>
+            </a>
+            
+            <a class="tile-card" href="lessons2.php">
+                <span class="ic">✋</span>
+                <div>
+                    <h3>إدارة الدروس</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-top: 2px;">استعراض وتنظيم المحتوى التعليمي</p>
+                </div>
+                <span class="badge-count"><?= $lesson_count ?> درس</span>
+            </a>
 
-  <nav class="bottom">
-  <?php foreach ($items as $n):
-    $cls = 'nav-item';
-    if ($n['key'] === 'home') $cls .= ' home';
-    if ($n['key'] === $current) $cls .= ' active';
-  ?>
-    <a class="<?= $cls ?>" href="<?= htmlspecialchars($n['href'], ENT_QUOTES, 'UTF-8') ?>">
-      <span class="ic"><?= $n['icon'] ?></span>
-      <span><?= htmlspecialchars($n['label'], ENT_QUOTES, 'UTF-8') ?></span>
-    </a>
-  <?php endforeach; ?>
-</nav>
-</div>
+            <a class="tile-card" href="skills.php">
+                <span class="ic">📊</span>
+                <div>
+                    <h3>تفاصيل المهارات</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-top: 2px;">متابعة نسب إتقان الحروف والمهارات</p>
+                </div>
+            </a>
+
+            <a class="tile-card" href="student.php">
+                <span class="ic">👥</span>
+                <div>
+                    <h3>إدارة الطلاب</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-top: 2px;">متابعة تقارير وبيانات المسجلين</p>
+                </div>
+                <span class="badge-count"><?= $student_count ?> طالب</span>
+            </a>
+        </div>
+
+        <h2 class="section-title">الإشعارات والتنبيهات</h2>
+        <section class="notes-card">
+            <?php foreach ($notifications as $n): ?>
+                <div class="note-item">
+                    <span class="ic"><?= $n['icon'] ?></span>
+                    <div>
+                        <div class="txt"><?= e($n['text']) ?></div>
+                        <div class="time"><?= e($n['time']) ?></div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </section>
+
+    </main>
+
 </body>
 </html>
