@@ -1,10 +1,8 @@
 <?php
-
 include 'db_connect.php';
 
 $message = "";
 $error = "";
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = trim($_POST['full_name']);
@@ -14,8 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $role      = trim($_POST['role']); // guardian أو teacher
 
     if (!empty($full_name) && !empty($email) && !empty($password) && !empty($role)) {
-
-    $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
+        $check = $conn->prepare("SELECT id FROM user WHERE email = ?");
         $check->bind_param("s", $email);
         $check->execute();
         $check_result = $check->get_result();
@@ -23,13 +20,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($check_result->num_rows > 0) {
             $error = "البريد الإلكتروني مستخدم بالفعل!";
         } else {
-
-        $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO user (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("sssss", $full_name, $email, $phone, $password, $role);
 
             if ($stmt->execute()) {
                 $user_id = $stmt->insert_id;
-
 
                 if ($role == 'guardian') {
                     $stmt_role = $conn->prepare("INSERT INTO guardian (user_id) VALUES (?)");

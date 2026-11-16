@@ -1,28 +1,21 @@
 <?php
-
 include 'db_connect.php';
 
 $error_message = "";
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
 
     if (!empty($email) && !empty($password)) {
-
-    $stmt = $conn->prepare("SELECT * FROM user WHERE (email = ? OR phone = ?) AND password = ?");
-        $stmt->bind_param("sss", $email, $email, $password);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt =$conn->prepare("SELECT * FROM user WHERE (email = ? OR phone = ?) AND password = ?");
+        $stmt->bind_param("sss", $email,$email, $password);$stmt->execute();
+        $result =$stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+            $user =$result->fetch_assoc();
             
-
-            if ($user['role'] == 'guardian') {
-                header("Location: guardian_dashboard.php");
-            } elseif ($user['role'] == 'teacher') {
+            if ($user['role'] == 'guardian') { header("Location: guardian_dashboard.php"); } elseif ($user['role'] == 'teacher') {
                 header("Location: teacher_dashboard.php");
             } else {
                 header("Location: index.php");
