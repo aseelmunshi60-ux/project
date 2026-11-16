@@ -1,4 +1,6 @@
 <?php
+session_start();
+include 'db_connect.php';
 $users = [
     ['id' => 1, 'name' => 'عبدالله', 'role' => 'طالب'],
     ['id' => 2, 'name' => 'احمد',    'role' => 'طالب'],

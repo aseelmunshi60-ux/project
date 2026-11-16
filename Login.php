@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+            $user =$result->fetch_assoc();
             
             $_SESSION['user_id'] = $user['user_id']; 
             $_SESSION['name'] = $user['name'];

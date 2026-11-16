@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'db_connect.php';
 
 $username = $_SESSION['username'] ?? 'مستخدم وصلة';
 $email = $_SESSION['email'] ?? 'البريد غير مسجل';
