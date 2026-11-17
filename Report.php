@@ -1,372 +1,426 @@
 <?php
-seession_start();
-include  'db_connect.php';
-$child = [
-    'name'        => 'أحمد',
-    'completion'  => 75,
-    'minutes'     => 150,
-    'weekly'      => [10, 25, 20, 40, 35, 55, 70],
-    'last_lesson' => 'درس حرف الياء',
-    'badges'      => ['🥇', '🥈', '🥉', '🏅'],
+// إظهار الأخطاء لتسهيل التتبع
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'db_connect.php';
+
+$current = 'report';
+
+// بيانات افتراضية آمنة في حال كان جدول القاعدة فارغاً
+$reports = [
+    [
+        'id' => 1, 
+        'name' => 'أحمد', 
+        'points' => 150, 
+        'badge' => 'محترف الحركات الأساسية', 
+        'completion' => 85, 
+        'status' => 'ممتاز',
+        'achievements' => ['أتم درس الحروف الهوائية بنجاح', 'حقق دقة 90% في اختبار الأرقام', 'مواظبة كاملة خلال الأسبوع']
+    ],
+    [
+        'id' => 2, 
+        'name' => 'عبدالله', 
+        'points' => 90, 
+        'badge' => 'مستمر بانتظام', 
+        'completion' => 60, 
+        'status' => 'جيد جداً',
+        'achievements' => ['أكمل 3 دروس أساسية', 'يحتاج التركيز على سرعة إتقان الإشارات']
+    ],
+    [
+        'id' => 3, 
+        'name' => 'حسن', 
+        'points' => 200, 
+        'badge' => 'سفير لغة الإشارة', 
+        'completion' => 98, 
+        'status' => 'متفوق',
+        'achievements' => ['أنهى جميع مستويات المنصة بنجاح تام', 'حقق المركز الأول في اختبار دقة الحركات', 'ساعد زملائه في الأنشطة التفاعلية']
+    ],
+    [
+        'id' => 4, 
+        'name' => 'عمر', 
+        'points' => 40, 
+        'badge' => 'بداية موفقة', 
+        'completion' => 30, 
+        'status' => 'يحتاج متابعة',
+        'achievements' => ['سجل الدخول وبدأ الدرس الأول', 'بحاجة لمتابعة إضافية في التمارين اليومية']
+    ],
 ];
 
-$child['completion'] = max(0, min(100, (int) $child['completion']));
-$child['minutes'] = max(0, (int) $child['minutes']);
-
-$r = 40;
-$circ = 2 * M_PI * $r;
-$dash = $circ * $child['completion'] / 100;
-
-$weekly = array_map(
-    static fn($v) => max(0, (float) $v),
-    $child['weekly']
-);
-
-$n = count($weekly);
-$max = $n > 0 ? max($weekly) : 0;
-$pts = [];
-
-if ($n === 1) {
-    $y = $max > 0 ? 54 - ($weekly[0] / $max) * 46 : 54;
-    $pts[] = '50,' . round($y, 1);
-} elseif ($n > 1) {
-    foreach ($weekly as $i => $v) {
-        $x = 6 + $i * (88 / ($n - 1));
-        $y = $max > 0 ? 54 - ($v / $max) * 46 : 54;
-        $pts[] = round($x, 1) . ',' . round($y, 1);
-    }
+// سحب بيانات الإنجازات والطلاب حية من قاعدة البيانات
+if (isset($conn)) {
+    try {
+        $result_reports = @mysqli_query($conn, "SELECT * FROM child");
+        if ($result_reports && mysqli_num_rows($result_reports) > 0) {
+            $reports = [];
+            while ($row = mysqli_fetch_assoc($result_reports)) {
+                $comp = (int)($row['grade'] ?? $row['completion'] ?? 75);
+                $badge_title = $comp >= 90 ? 'سفير لغة الإشارة' : ($comp >= 70 ? 'محترف الحركات الأساسية' : 'مستمر بانتظام');
+                $status_text = $comp >= 85 ? 'ممتاز' : ($comp >= 50 ? 'جيد جداً' : 'يحتاج متابعة');
+                
+                $achv = [
+                    'نسبة إتقان الحركات: ' . $comp . '%',
+                    $comp >= 70 ? 'اجتاز الاختبارات التقييمية بكفاءة' : 'بحاجة لتكرار تمارين الدروس',
+                    'المواظبة العامة في المنصة مستقرة'
+                ];
+                
+                $reports[] = [
+                    'id' => $row['id'] ?? 1,
+                    'name' => $row['name'] ?? $row['child_name'] ?? 'طالب',
+                    'points' => (int)($row['points'] ?? ($comp * 2)),
+                    'badge' => $badge_title,
+                    'completion' => $comp,
+                    'status' => $status_text,
+                    'achievements' => $achv
+                ];
+            }
+        }
+    } catch (Throwable $e) {}
 }
 
-function e($value): string
-{
-    return htmlspecialchars(
-        (string) $value,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
+function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إنجازات الطلاب - منصة وصلة التعليمية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+        font-family: 'Tajawal', sans-serif;
+        min-height: 100vh;
+        background-color: #f8fafc;
+        color: #1e293b;
+    }
 
-    <title>تقرير أداء الطفل</title>
+    /* شريط التنقل العلوي الموحد للمنصة */
+    .navbar {
+        width: 100%;
+        background-color: #111827;
+        color: #ffffff;
+        padding: 14px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
-        rel="stylesheet"
-    >
+    .navbar .brand {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        text-decoration: none;
+    }
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    .navbar nav {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
 
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: #222;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
+    .navbar nav a {
+        text-decoration: none;
+        color: #cbd5e1;
+        font-weight: 500;
+        font-size: 15px;
+        transition: color 0.2s;
+    }
 
-        .app {
-            width: 100%;
-            max-width: 400px;
-            min-height: 100vh;
-            position: relative;
-            padding: 22px 16px 100px;
-            background: linear-gradient(
-                180deg,
-                #b9dcf7 0%,
-                #dcecf7 55%,
-                #eef5f8 100%
-            );
-        }
+    .navbar nav a:hover,
+    .navbar nav a.active {
+        color: #ffffff;
+        font-weight: 700;
+    }
 
-        header {
-            display: flex;
-            align-items: center;
+    /* زر تسجيل الدخول والخروج باللون الأزرق الموحد */
+    .navbar .btn-login,
+    .navbar .btn-logout {
+        background-color: #2563eb;
+        color: #ffffff !important;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .navbar .btn-login:hover,
+    .navbar .btn-logout:hover {
+        background-color: #1d4ed8;
+    }
+
+    /* حاوية المحتوى الرئيسي العريضة */
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+    }
+
+    header h1 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    /* حقل البحث التفاعلي */
+    .search-box {
+        margin-bottom: 25px;
+    }
+
+    .search-box input {
+        width: 100%;
+        max-width: 400px;
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 14px;
+        background: #ffffff;
+        outline: none;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+        border-color: #2563eb;
+    }
+
+    /* شبكة التقارير والإنجازات */
+    .list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .student-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .badge-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .badge {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .chev {
+        transition: transform .2s;
+        font-size: 20px;
+        color: #64748b;
+    }
+
+    .card.open .chev {
+        transform: rotate(180deg);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .info-row span b {
+        color: #0f172a;
+    }
+
+    /* شريط التقدم */
+    .progress-bar-bg {
+        width: 100%;
+        height: 10px;
+        background: #f1f5f9;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: #2563eb;
+        border-radius: 5px;
+        transition: width 0.4s ease;
+    }
+
+    /* القائمة المنسدلة للتفاصيل */
+    .dropdown-details {
+        display: none;
+        margin-top: 10px;
+        padding-top: 14px;
+        border-top: 1px dashed #cbd5e1;
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .card.open .dropdown-details {
+        display: block;
+    }
+
+    .dropdown-details h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .dropdown-details ul {
+        padding-inline-start: 20px;
+        font-size: 13px;
+        color: #64748b;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .navbar {
+            padding: 14px 20px;
+            flex-direction: column;
             gap: 12px;
-            margin-bottom: 18px;
         }
-
-        header svg {
-            width: 42px;
-            height: 42px;
-            flex-shrink: 0;
+        .list {
+            grid-template-columns: 1fr;
         }
-
-        header h1 {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1.5;
-        }
-
-        .card {
-            background: #fdf9f8;
-            border-radius: 14px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px #0001;
-        }
-
-        .card h2 {
-            font-size: 21px;
-            font-weight: 800;
-        }
-
-        .split {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .donut {
-            text-align: center;
-            font-size: 16px;
-            font-weight: 500;
-            flex-shrink: 0;
-        }
-
-        .donut svg {
-            width: 80px;
-            height: 80px;
-            display: block;
-            margin: 0 auto 4px;
-        }
-
-        .time small {
-            display: block;
-            font-size: 15px;
-            font-weight: 500;
-            text-align: center;
-            line-height: 1.7;
-        }
-
-        .time svg {
-            display: block;
-            width: 110px;
-            max-width: 100%;
-            height: 70px;
-            margin-top: 6px;
-            overflow: visible;
-        }
-
-        .lesson {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .lesson b {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .lesson span {
-            font-size: 13px;
-        }
-
-        .lesson .ribbon {
-            font-size: 34px;
-            flex-shrink: 0;
-        }
-
-        .badges {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            font-size: 34px;
-            margin-top: 12px;
-        }
-
-        nav {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            left: 0;
-            width: 100%;
-            min-height: 60px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 8px 10px;
-            background: #b8f0ea;
-            border-top: 1px solid #0001;
-        }
-
-        nav a {
-            text-decoration: none;
-            font-size: 26px;
-            color: #000;
-            width: 60px;
-            min-height: 42px;
-            display: grid;
-            place-items: center;
-        }
-
-        nav a.home {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: #b8f0ea;
-            border: 3px solid #fff;
-            display: grid;
-            place-items: center;
-            margin-top: -30px;
-            font-size: 30px;
-            box-shadow: 0 4px 10px #0002;
-        }
-
-        nav a:focus-visible {
-            outline: 3px solid #356ac3;
-            outline-offset: 3px;
-        }
-
-        @media (max-width: 350px) {
-            .app {
-                padding-inline: 10px;
-            }
-
-            header h1 {
-                font-size: 19px;
-            }
-
-            .card {
-                padding: 14px;
-            }
-
-            .card h2 {
-                font-size: 18px;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
-
 <body>
-<div class="app">
 
-    <header>
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#000"
-            stroke-width="2"
-            aria-hidden="true"
-        >
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="10" r="3.5"/>
-            <path d="M5.5 19c1.5-3 4-4 6.5-4s5 1 6.5 4"/>
-        </svg>
+    <!-- شريط التنقل العلوي الموحد -->
+    <header class="navbar">
+        <div class="brand">منصة وصلة التعليمية</div>
+        <nav aria-label="التنقل الرئيسي">
+            <a href="home.php">الرئيسية</a>
+            <a href="lessons.php">الدروس</a>
+            <a href="game.php">الألعاب</a>
+            <a href="Report.php" class="active">الإنجازات</a>
+            <a href="skills.php">المهارات</a>
+            <a href="student.php">الطلاب</a>
+            <a href="profile.php">الإعدادات</a>
 
-        <h1>تقرير أداء الطفل <?= e($child['name']) ?></h1>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="logout.php" class="btn-logout">تسجيل الخروج</a>
+            <?php else: ?>
+                <a href="login.php" class="btn-login">تسجيل الدخول</a>
+            <?php endif; ?>
+        </nav>
     </header>
 
-    <section class="card split">
-        <h2>نسبة الإنجاز</h2>
+    <!-- المحتوى الرئيسي لصفحة الإنجازات -->
+    <main class="container">
+        
+        <header>
+            <h1>سجل إنجازات وتقارير الطلاب</h1>
+        </header>
 
-        <div class="donut">
-            <svg
-                viewBox="0 0 100 100"
-                role="img"
-                aria-label="نسبة الإنجاز <?= $child['completion'] ?> بالمئة"
-            >
-                <circle
-                    cx="50"
-                    cy="50"
-                    r="<?= $r ?>"
-                    fill="none"
-                    stroke="#e5e5e5"
-                    stroke-width="14"
-                />
-
-                <circle
-                    cx="50"
-                    cy="50"
-                    r="<?= $r ?>"
-                    fill="none"
-                    stroke="#000"
-                    stroke-width="14"
-                    stroke-dasharray="<?= round($dash, 1) ?> <?= round($circ, 1) ?>"
-                    transform="rotate(-90 50 50)"
-                />
-            </svg>
-
-            <?= $child['completion'] ?>%
-        </div>
-    </section>
-
-    <section class="card split time">
-        <h2>وقت التعلم</h2>
-
-        <div>
-            <small>
-                <?= $child['minutes'] ?> دقيقة
-                <br>
-                هذا الأسبوع
-            </small>
-
-            <svg
-                viewBox="0 0 100 60"
-                role="img"
-                aria-label="رسم بياني لدقائق التعلم خلال الأسبوع"
-            >
-                <path
-                    d="M2 2V58H98"
-                    fill="none"
-                    stroke="#000"
-                    stroke-width="2"
-                />
-
-                <?php if (count($pts) > 0): ?>
-                    <polyline
-                        points="<?= e(implode(' ', $pts)) ?>"
-                        fill="none"
-                        stroke="#000"
-                        stroke-width="3"
-                        stroke-linejoin="round"
-                        stroke-linecap="round"
-                    />
-                <?php endif; ?>
-            </svg>
-        </div>
-    </section>
-
-    <section class="card lesson">
-        <div>
-            <b>آخر درس تم إكماله</b>
-            <span><?= e($child['last_lesson']) ?></span>
+        <!-- حقل بحث تفاعلي لتصفية الطلاب مباشرة -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="ابحث عن اسم الطالب..." onkeyup="filterStudents()">
         </div>
 
-        <div class="ribbon" aria-hidden="true">🏅</div>
-    </section>
+        <div class="list" id="studentsList">
+            <?php foreach ($reports as $i => $r): ?>
+                <div class="card <?= $i === 0 ? 'open' : '' ?>" data-name="<?= e($r['name']) ?>">
+                    <div class="card-top" onclick="this.closest('.card').classList.toggle('open')">
+                        <div class="student-name">الطالب <?= e($r['name']) ?></div>
+                        <div class="badge-status">
+                            <span class="badge"><?= e($r['status']) ?></span>
+                            <span class="chev">⌄</span>
+                        </div>
+                    </div>
 
-    <section class="card">
-        <h2>أحدث الشارات</h2>
+                    <div class="info-row" style="margin-top: 6px;">
+                        <span>الشارة: <b><?= e($r['badge']) ?></b></span>
+                        <span>النقاط: <b><?= (int)$r['points'] ?> نقطة</b></span>
+                    </div>
 
-        <div class="badges">
-            <?php foreach ($child['badges'] as $badge): ?>
-                <span><?= e($badge) ?></span>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 5px; color: #64748b;">
+                            <span>نسبة الإنجاز الكلي</span>
+                            <span><?= (int)$r['completion'] ?>%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: <?= (int)$r['completion'] ?>%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- القائمة المنسدلة للتفاصيل والإنجازات -->
+                    <div class="dropdown-details">
+                        <h4>تفاصيل الإنجازات والأنشطة المكتملة:</h4>
+                        <ul>
+                            <?php foreach ($r['achievements'] as $achv): ?>
+                                <li><?= e($achv) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
             <?php endforeach; ?>
         </div>
-    </section>
 
-    <nav aria-label="التنقل الرئيسي">
-        <a href="profile.php" aria-label="الإعدادات">⚙️</a>
-        <a href="index.php" class="home" aria-label="الرئيسية">🏠</a>
-        <a href="Report.php" aria-label="الإنجازات">🏆</a>
-    </nav>
+    </main>
 
-</div>
+    <script>
+        // دالة بحث تفاعلية وفورية لتصفية الطلاب
+        function filterStudents() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                let name = card.getAttribute('data-name').toLowerCase();
+                if (name.includes(input)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>
