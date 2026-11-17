@@ -9,7 +9,7 @@ $title_param = isset($_GET['title']) ? trim($_GET['title']) : '';
 
 $lesson = null;
 
-// البحث باستخدام lesson_id فقط لتجنب أي أخطاء في أسماء الأعمدة
+// البحث باستخدام lesson_id
 if ($id > 0) {
     $query = "SELECT * FROM lesson WHERE lesson_id = $id LIMIT 1";
     $result = @mysqli_query($conn, $query);
@@ -28,7 +28,7 @@ if (!$lesson && !empty($title_param)) {
     }
 }
 
-// إذا لم يوجد في القاعدة، ننشئ له محتوى افتراضي مؤقت لضمان فتح الصفحة بسلاسة
+// محتوى افتراضي مؤقت لضمان فتح الصفحة بسلاسة
 if (!$lesson) {
     $lesson = [
         'title' => !empty($title_param) ? $title_param : 'تفاصيل الدرس',
@@ -42,41 +42,154 @@ if (!$lesson) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($lesson['title']); ?> - منصة وصلة التعليمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .lesson-content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-            margin-top: 25px;
+        * {
+            box-sizing: border-box;
         }
-        .sign-item {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
+        /* تنسيق الهيدر بعرض الشاشة الكامل */
+        .main-header {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 15px 35px;
+            width: 100%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .nav-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+        .nav-links {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: #ffffff;
+            background-color: #2563eb;
+        }
+
+        /* تنسيق تفاصيل الدرس */
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+        }
+        .lesson-container {
+            max-width: 1000px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+        .lesson-card-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .lesson-header h1 {
+            color: #0f172a;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+        }
+        .btn-back {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            border: 1px solid #cbd5e1;
             transition: all 0.2s;
         }
+        .btn-back:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .lesson-desc {
+            font-size: 16px;
+            color: #334155;
+            line-height: 1.8;
+            background: #eff6ff;
+            padding: 18px 20px;
+            border-radius: 12px;
+            border-right: 4px solid #2563eb;
+            margin-bottom: 30px;
+        }
+        .section-heading {
+            font-size: 19px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 20px;
+        }
+        .lesson-content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+        .sign-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px 16px;
+            text-align: center;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
         .sign-item:hover {
-            border-color: #007bff;
-            transform: translateY(-3px);
-            background: #fff;
+            border-color: #2563eb;
+            transform: translateY(-4px);
+            background: #ffffff;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.08);
         }
         .sign-symbol {
-            font-size: 2.5rem;
-            margin-bottom: 8px;
+            font-size: 46px;
+            margin-bottom: 12px;
             display: block;
         }
         .sign-label {
-            font-weight: bold;
-            color: #2c3e50;
-            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 17px;
+            margin-bottom: 8px;
         }
         .sign-hint {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 5px;
+            font-size: 13.5px;
+            color: #64748b;
+            line-height: 1.6;
         }
     </style>
 </head>
@@ -99,18 +212,18 @@ if (!$lesson) {
         </div>
     </header>
 
-    <main class="main-container" style="padding: 30px 20px; max-width: 950px; margin: 0 auto;">
-        <div class="card" style="padding: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
-                <h1 style="color: #2c3e50; margin: 0;"><?php echo htmlspecialchars($lesson['title']); ?></h1>
-                <a href="lesson.php" class="card-btn" style="width: auto; padding: 8px 18px; background: #6c757d; color: #fff; text-decoration: none; border-radius: 6px;">العودة للدروس</a>
+    <main class="lesson-container">
+        <div class="lesson-card-box">
+            <div class="lesson-header">
+                <h1><?php echo htmlspecialchars($lesson['title']); ?></h1>
+                <a href="lesson.php" class="btn-back">⬅ العودة للدروس</a>
             </div>
             
-            <p style="font-size: 1.1rem; color: #444; line-height: 1.8; background: #eef6ff; padding: 15px; border-radius: 8px; border-right: 4px solid #007bff;">
+            <div class="lesson-desc">
                 <?php echo htmlspecialchars(isset($lesson['description']) ? $lesson['description'] : 'محتوى تعليمي مميز.'); ?>
-            </p>
+            </div>
 
-            <h3 style="margin-top: 25px; color: #2c3e50;">محتوى الدرس والتدريبات:</h3>
+            <h3 class="section-heading">محتوى الدرس والتدريبات:</h3>
             <div class="lesson-content-grid">
                 <?php
                 $title = trim($lesson['title']);
