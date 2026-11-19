@@ -50,22 +50,21 @@ if (isset($conn)) {
         $res = @mysqli_query($conn, "SELECT * FROM lesson");
         if ($res && mysqli_num_rows($res) > 0) {
             while ($row = mysqli_fetch_assoc($res)) {
-                $db_title = trim($row['title'] ?? '');
+                $db_title = trim((string)($row['title'] ?? ''));
                 if ($db_title === '') {
                     continue;
                 }
 
                 $exists = false;
                 foreach ($lessons as $l) {
-                    if ($l['title'] === $db_title) {
+                    if (trim((string)$l['title']) === $db_title) {
                         $exists = true;
                         break;
                     }
                 }
 
                 if (!$exists) {
-                    $raw_desc = $row['content'] ?? $row['description'] ?? 'محتوى تعليمي تفاعلي.';
-                    // إخفاء سطر رابط الفيديو إن وجد داخل content ليبقى الوصف نظيفاً في القائمة
+                    $raw_desc = (string)($row['content'] ?? $row['description'] ?? 'محتوى تعليمي تفاعلي.');
                     $clean_desc = trim(preg_replace('/\s*رابط الفيديو:\s*https?:\/\/\S+/iu', '', $raw_desc));
                     if ($clean_desc === '') {
                         $clean_desc = 'محتوى تعليمي تفاعلي.';
@@ -84,6 +83,18 @@ if (isset($conn)) {
     }
 }
 
+// 3. تصفية الدروس المخفية بناءً على عنوان الدرس من الجلسة
+if (!isset($_SESSION['hidden_lessons']) || !is_array($_SESSION['hidden_lessons'])) {
+    $_SESSION['hidden_lessons'] = [];
+}
+
+$hidden_titles = array_map(fn($x) => trim((string)$x), $_SESSION['hidden_lessons']);
+
+$visible_lessons = array_values(array_filter($lessons, function ($l) use ($hidden_titles) {
+    $t = trim((string)($l['title'] ?? ''));
+    return !in_array($t, $hidden_titles, true);
+}));
+
 function e($s) {
     return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
 }
@@ -97,7 +108,7 @@ function e($s) {
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Tajawal', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
 
     .main-header { background-color: #1e293b; color: #ffffff; padding: 15px 35px; width: 100%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
@@ -148,7 +159,7 @@ function e($s) {
         </div>
 
         <div class="lessons-grid">
-            <?php foreach ($lessons as $l): ?>
+            <?php foreach ($visible_lessons as $l): ?>
                 <div class="lesson-card">
                     <div class="lesson-info">
                         <h2><?= e($l['title']) ?></h2>
