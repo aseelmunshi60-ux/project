@@ -13,12 +13,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     // header("Location: login.php"); exit();
 }
 
-function e($s) {
-    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+if (!function_exists('e')) {
+    function e($s) {
+        return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    }
 }
 
-$success_msg = '';
-$error_msg = '';
+// قراءة رسائل الجلسة بعد التحويل ثم تفريغها
+$success_msg = (string)($_SESSION['users_flash_success'] ?? '');
+$error_msg   = (string)($_SESSION['users_flash_error'] ?? '');
+unset($_SESSION['users_flash_success'], $_SESSION['users_flash_error']);
 
 // تهيئة قائمة الإخفاء للدروس في الجلسة
 if (!isset($_SESSION['hidden_lessons']) || !is_array($_SESSION['hidden_lessons'])) {
@@ -103,9 +107,11 @@ if (!isset($_SESSION['admin_users']) || !is_array($_SESSION['admin_users'])) {
     }
 }
 
-// معالجة إجراءات POST
+// معالجة إجراءات POST ثم التحويل الفوري (PRG) لتجنب رسالة إعادة إرسال النموذج عند الرجوع
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $flash_ok  = '';
+    $flash_err = '';
 
     // 1. تبديل حالة المستخدم (نشط <-> موقوف)
     if ($action === 'toggle_user_status') {
@@ -126,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } catch (Throwable $e) {}
                 }
 
-                $success_msg = 'تم تحديث حالة المستخدم "' . $u['name'] . '" إلى (' . $u['status'] . ').';
+                $flash_ok = 'تم تحديث حالة المستخدم "' . $u['name'] . '" إلى (' . $u['status'] . ').';
                 break;
             }
         }
@@ -134,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 2. تغيير حالة الدرس إلى (إظهار أو إخفاء) بالاعتماد على عنوان الدرس مباشرة
-    if ($action === 'set_lesson_visibility') {
+    elseif ($action === 'set_lesson_visibility') {
         $l_title = trim((string)($_POST['lesson_title'] ?? ''));
         $state   = trim((string)($_POST['visibility_state'] ?? 'show'));
 
@@ -146,21 +152,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($state === 'hide') {
                 $_SESSION['hidden_lessons'][] = $l_title;
-                $success_msg = 'تم إخفاء درس "' . $l_title . '" من قائمة الدروس.';
+                $flash_ok = 'تم إخفاء درس "' . $l_title . '" من قائمة الدروس.';
             } else {
-                $success_msg = 'تم إظهار درس "' . $l_title . '" في قائمة الدروس.';
+                $flash_ok = 'تم إظهار درس "' . $l_title . '" في قائمة الدروس.';
             }
         }
     }
 
     // 3. إضافة لعبة جديدة من لوحة التحكم
-    if ($action === 'add_admin_game') {
+    elseif ($action === 'add_admin_game') {
         $g_title = trim((string)($_POST['game_title'] ?? ''));
         $g_mode  = trim((string)($_POST['game_mode'] ?? 'numbers'));
         $g_pts   = isset($_POST['game_points']) ? max(5, min(100, (int)$_POST['game_points'])) : 15;
 
         if ($g_title === '') {
-            $error_msg = 'يرجى إدخال اسم اللعبة.';
+            $flash_err = 'يرجى إدخال اسم اللعبة.';
         } else {
             $_SESSION['added_games'][] = [
                 'id' => 'custom_' . uniqid(),
@@ -188,22 +194,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]
                 ]
             ];
-            $success_msg = 'تمت إضافة اللعبة "' . $g_title . '" بنجاح!';
+            $flash_ok = 'تمت إضافة اللعبة "' . $g_title . '" بنجاح!';
         }
     }
 
     // 4. حذف لعبة مضافة
-    if ($action === 'delete_game') {
+    elseif ($action === 'delete_game') {
         $gid = trim((string)($_POST['game_id'] ?? ''));
         $_SESSION['added_games'] = array_values(array_filter(
             $_SESSION['added_games'],
             fn($g) => ($g['id'] ?? '') !== $gid
         ));
-        $success_msg = 'تم حذف اللعبة بنجاح.';
+        $flash_ok = 'تم حذف اللعبة بنجاح.';
     }
+
+    if ($flash_ok !== '') {
+        $_SESSION['users_flash_success'] = $flash_ok;
+    }
+    if ($flash_err !== '') {
+        $_SESSION['users_flash_error'] = $flash_err;
+    }
+
+    header("Location: users.php");
+    exit;
 }
 
-// معالجة حذف المستخدم في نفس الصفحة
+// معالجة حذف المستخدم ثم التحويل إلى users.php نظيفة
 if (isset($_GET['delete_id'])) {
     $del_id = (int)$_GET['delete_id'];
     if ($del_id > 0) {
@@ -222,8 +238,10 @@ if (isset($_GET['delete_id'])) {
             $_SESSION['admin_users'],
             fn($u) => (int)($u['id'] ?? 0) !== $del_id
         ));
-        $success_msg = 'تم حذف المستخدم بنجاح!';
+        $_SESSION['users_flash_success'] = 'تم حذف المستخدم بنجاح!';
     }
+    header("Location: users.php");
+    exit;
 }
 
 $users = $_SESSION['admin_users'];
@@ -240,7 +258,7 @@ $avatar = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r
 <title>لوحة تحكم المدير - إدارة المستخدمين والدروس والألعاب</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: 'Tajawal', sans-serif;
