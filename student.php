@@ -11,27 +11,159 @@ include 'db_connect.php';
 $success_msg = '';
 $error_msg = '';
 
+// دالة مساعدة للتحقق من وجود سجل في جدول معين
+function recordExists(mysqli $conn, string $table, string $column, int $id): bool {
+    if ($id <= 0) {
+        return false;
+    }
+    try {
+        $stmt = $conn->prepare("SELECT 1 FROM `{$table}` WHERE `{$column}` = ? LIMIT 1");
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->store_result();
+        $exists = $stmt->num_rows > 0;
+        $stmt->close();
+        return $exists;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+// دالة لإنشاء مستخدم جديد في جدول user وإرجاع user_id الخاص به عند الحاجة
+function createUserForChild(mysqli $conn, string $studentName): int {
+    // محاولة إيجاد أول user_id موجود كخيار احتياطي إن تعذر الإدخال
+    $fallback_id = 0;
+    try {
+        $res = @$conn->query("SELECT user_id FROM `user` ORDER BY user_id ASC LIMIT 1");
+        if ($res && $row = $res->fetch_assoc()) {
+            $fallback_id = (int)($row['user_id'] ?? 0);
+        }
+    } catch (Throwable $e) {}
+
+    // محاولة إدخال صف جديد في جدول user بأمان حسب الأعمدة المتاحة
+    try {
+        $colsRes = @$conn->query("SHOW COLUMNS FROM `user`");
+        if ($colsRes) {
+            $cols = [];
+            while ($c = $colsRes->fetch_assoc()) {
+                $cols[] = $c['Field'];
+            }
+
+            $insertCols = [];
+            $placeholders = [];
+            $types = '';
+            $values = [];
+            $uniqueSuffix = random_int(100, 9999);
+
+            if (in_array('name', $cols, true)) {
+                $insertCols[] = '`name`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = $studentName;
+            } elseif (in_array('username', $cols, true)) {
+                $insertCols[] = '`username`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = 'student_' . $uniqueSuffix;
+            }
+
+            if (in_array('email', $cols, true)) {
+                $insertCols[] = '`email`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = 'student_' . $uniqueSuffix . '@wasla.local';
+            }
+
+            if (in_array('password', $cols, true)) {
+                $insertCols[] = '`password`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = password_hash('Wasla@123', PASSWORD_DEFAULT);
+            }
+
+            if (in_array('role', $cols, true)) {
+                $insertCols[] = '`role`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = 'student';
+            }
+
+            if (in_array('status', $cols, true)) {
+                $insertCols[] = '`status`';
+                $placeholders[] = '?';
+                $types .= 's';
+                $values[] = 'نشط';
+            }
+
+            if (!empty($insertCols)) {
+                $sql = "INSERT INTO `user` (" . implode(', ', $insertCols) . ") VALUES (" . implode(', ', $placeholders) . ")";
+                $stmt = $conn->prepare($sql);
+                if ($stmt) {
+                    $stmt->bind_param($types, ...$values);
+                    if ($stmt->execute()) {
+                        $newId = (int)$conn->insert_id;
+                        $stmt->close();
+                        if ($newId > 0) {
+                            return $newId;
+                        }
+                    } else {
+                        $stmt->close();
+                    }
+                }
+            }
+        }
+    } catch (Throwable $e) {}
+
+    return $fallback_id;
+}
+
 // 1. معالجة إضافة طالب جديد مع الاسم والحقول الكاملة
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_child') {
     $name = trim($_POST['name'] ?? '');
-    $user_id = (int)($_POST['user_id'] ?? 1);
+    $user_id = (int)($_POST['user_id'] ?? 0);
     $guardian_id = (int)($_POST['guardian_id'] ?? 1);
     $age = (int)($_POST['age'] ?? 0);
     $level = trim($_POST['level'] ?? '');
 
     if (!empty($name) && $age > 0 && !empty($level)) {
         if (isset($conn)) {
-            $stmt = $conn->prepare("INSERT INTO child (name, user_id, guardian_id, age, level) VALUES (?, ?, ?, ?, ?)");
-            if ($stmt) {
-                $stmt->bind_param("siiis", $name, $user_id, $guardian_id, $age, $level);
-                if ($stmt->execute()) {
-                    $success_msg = 'تم إضافة الطالب بنجاح!';
-                } else {
-                    $error_msg = 'حدث خطأ أثناء الإدخال في قاعدة البيانات.';
+            try {
+                // إذا لم يكن user_id موجوداً في جدول user، أنشئ مستخدماً واحصل على user_id صحيح
+                if (!recordExists($conn, 'user', 'user_id', $user_id)) {
+                    $user_id = createUserForChild($conn, $name);
                 }
-                $stmt->close();
-            } else {
-                $error_msg = 'خطأ في تجهيز استعلام الإضافة.';
+
+                // التحقق من guardian_id إذا كان جدول guardian يحتوي على السجل، وإلا استخدام أول guardian_id متاح
+                if (!recordExists($conn, 'guardian', 'guardian_id', $guardian_id)) {
+                    $gRes = @$conn->query("SELECT guardian_id FROM `guardian` ORDER BY guardian_id ASC LIMIT 1");
+                    if ($gRes && $gRow = $gRes->fetch_assoc()) {
+                        $guardian_id = (int)($gRow['guardian_id'] ?? $guardian_id);
+                    }
+                }
+
+                if ($user_id <= 0) {
+                    $error_msg = 'تعذر ربط الطالب بحساب مستخدم صالح في جدول user.';
+                } else {
+                    $stmt = $conn->prepare("INSERT INTO child (name, user_id, guardian_id, age, level) VALUES (?, ?, ?, ?, ?)");
+                    if ($stmt) {
+                        $stmt->bind_param("siiis", $name, $user_id, $guardian_id, $age, $level);
+                        if ($stmt->execute()) {
+                            $success_msg = 'تم إضافة الطالب بنجاح! (رقم المستخدم المرتبط: ' . $user_id . ')';
+                        } else {
+                            $error_msg = 'حدث خطأ أثناء الإدخال في قاعدة البيانات: ' . $stmt->error;
+                        }
+                        $stmt->close();
+                    } else {
+                        $error_msg = 'خطأ في تجهيز استعلام الإضافة: ' . $conn->error;
+                    }
+                }
+            } catch (mysqli_sql_exception $e) {
+                $error_msg = 'تعذر إضافة الطالب بسبب قيد الربط في قاعدة البيانات: ' . $e->getMessage();
+            } catch (Throwable $e) {
+                $error_msg = 'حدث خطأ غير متوقع أثناء إضافة الطالب: ' . $e->getMessage();
             }
         }
     } else {
@@ -43,15 +175,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if (isset($_GET['delete_id'])) {
     $del_id = (int)$_GET['delete_id'];
     if ($del_id > 0 && isset($conn)) {
-        $stmt = $conn->prepare("DELETE FROM child WHERE child_id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $del_id);
-            if ($stmt->execute()) {
-                $success_msg = 'تم حذف الطالب بنجاح!';
-            } else {
-                $error_msg = 'حدث خطأ أثناء حذف الطالب.';
+        try {
+            $stmt = $conn->prepare("DELETE FROM child WHERE child_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $del_id);
+                if ($stmt->execute()) {
+                    $success_msg = 'تم حذف الطالب بنجاح!';
+                } else {
+                    $error_msg = 'حدث خطأ أثناء حذف الطالب.';
+                }
+                $stmt->close();
             }
-            $stmt->close();
+        } catch (Throwable $e) {
+            $error_msg = 'تعذر حذف الطالب: ' . $e->getMessage();
         }
     }
 }
@@ -69,7 +205,7 @@ if (isset($conn)) {
     } catch (Throwable $e) {}
 }
 
-function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
+function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -80,7 +216,7 @@ function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+
     body {
         font-family: 'Tajawal', sans-serif;
         min-height: 100vh;
@@ -111,6 +247,7 @@ function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
         display: flex;
         gap: 20px;
         align-items: center;
+        flex-wrap: wrap;
     }
 
     .navbar nav a {
@@ -143,14 +280,14 @@ function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
         padding: 40px 20px;
     }
 
-    header {
+    header.page-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 25px;
     }
 
-    header h1 {
+    header.page-header h1 {
         font-size: 22px;
         font-weight: 800;
         color: #0f172a;
@@ -311,8 +448,8 @@ function e($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 
     <!-- المحتوى الرئيسي -->
     <main class="container">
-        
-        <header>
+
+        <header class="page-header">
             <h1>إدارة الطلاب</h1>
         </header>
 
