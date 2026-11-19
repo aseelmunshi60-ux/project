@@ -16,7 +16,7 @@ if ($id > 0) {
     if ($result && mysqli_num_rows($result) > 0) {
         $lesson = mysqli_fetch_assoc($result);
     }
-} 
+}
 
 // البحث بالعنوان إذا وُجد
 if (!$lesson && !empty($title_param)) {
@@ -35,6 +35,69 @@ if (!$lesson) {
         'description' => 'محتوى تعليمي تفاعلي لتعلم لغة الإشارة بكل سهولة ويسر.'
     ];
 }
+
+// ربط معرّف فيديو يوتيوب (Video ID) بكل درس
+$lesson_videos = [
+    'الحروف'          => 'AJeEBx3sbEc',
+    'الأرقام'          => 'k8DXozUtsDI',
+    'الألوان'          => 'IaJRTJbOpyM',
+    'المشاعر'          => 'pngr7NcWyOw',
+    'أفراد العائلة'    => 'g84TS0NXuIo',
+    'الكلمات الأساسية' => 'n-JGG0PKF0Q',
+];
+
+$title = trim($lesson['title']);
+$video_id = $lesson_videos[$title] ?? 'AJeEBx3sbEc';
+$embed_url = "https://www.youtube.com/embed/" . rawurlencode($video_id);
+$watch_url = "http://www.youtube.com/watch?v=" . rawurlencode($video_id);
+
+if ($title === 'الحروف') {
+    $items = [
+        ['symbol' => '☝️', 'label' => 'حرف الألف (أ)', 'hint' => 'رفع السبابة للأعلى مع ثني باقي الأصابع'],
+        ['symbol' => '✋', 'label' => 'حرف الباء (ب)', 'hint' => 'فرد الكف للأمام مع ضم الإبهام'],
+        ['symbol' => '✌️', 'label' => 'حرف التاء (ت)', 'hint' => 'رفع السبابة والوسطى بشكل متباعد'],
+        ['symbol' => '🤟', 'label' => 'حرف الثاء (ث)', 'hint' => 'رفع ثلاث أصابع للأعلى'],
+        ['symbol' => '🤏', 'label' => 'حرف الجيم (ج)', 'hint' => 'تقويس الأصابع بشكل نصف دائري'],
+        ['symbol' => '✊', 'label' => 'حرف الحاء (ح)', 'hint' => 'قبض اليد مع توجيه الكف للأمام']
+    ];
+} elseif ($title === 'الأرقام') {
+    $items = [
+        ['symbol' => '☝️', 'label' => 'الرقم ١', 'hint' => 'إصبع السبابة مرفوع'],
+        ['symbol' => '✌️', 'label' => 'الرقم ٢', 'hint' => 'السبابة والوسطى مرفوعتان'],
+        ['symbol' => '🤟', 'label' => 'الرقم ٣', 'hint' => 'ثلاثة أصابع مرفوعة'],
+        ['symbol' => '🖖', 'label' => 'الرقم ٤', 'hint' => 'أربعة أصابع مرفوعة دون الإبهام'],
+        ['symbol' => '🖐️', 'label' => 'الرقم ٥', 'hint' => 'فتح جميع أصابع اليد الخمسة']
+    ];
+} elseif ($title === 'الألوان') {
+    $items = [
+        ['symbol' => '🔴', 'label' => 'لون أحمر', 'hint' => 'تمرير الإصبع على الشفاه مرتين'],
+        ['symbol' => '🔵', 'label' => 'لون أزرق', 'hint' => 'تحريك اليد بحركة تشير للسماء'],
+        ['symbol' => '🟢', 'label' => 'لون أخضر', 'hint' => 'هز اليد تدريجياً للدلالة على الطبيعة'],
+        ['symbol' => '🟡', 'label' => 'لون أصفر', 'hint' => 'حركة دائرية تدل على الشمس']
+    ];
+} elseif ($title === 'المشاعر') {
+    $items = [
+        ['symbol' => '😊', 'label' => 'سعادة / فرح', 'hint' => 'رسم ابتسامة باليدين على الوجه'],
+        ['symbol' => '😢', 'label' => 'حزن', 'hint' => 'تمرير الأصابع للأسفل بمحاذاة الخد كنزول الدموع'],
+        ['symbol' => '😡', 'label' => 'غضب', 'hint' => 'قبض اليدين وتقطيب الحاجبين بقوة']
+    ];
+} elseif ($title === 'أفراد العائلة') {
+    $items = [
+        ['symbol' => '👨', 'label' => 'أب', 'hint' => 'وضع اليد بالقرب من الجبين'],
+        ['symbol' => '👩', 'label' => 'أم', 'hint' => 'لمس الخد باليد بقبضة خفيفة'],
+        ['symbol' => '👦', 'label' => 'أخ', 'hint' => 'ضم السبابتين معاً للدلالة على الأخوة'],
+        ['symbol' => '👧', 'label' => 'أخت', 'hint' => 'إشارة تدل على الأخت بقرب الخد']
+    ];
+} elseif ($title === 'الكلمات الأساسية') {
+    $items = [
+        ['symbol' => '✔️', 'label' => 'نعم', 'hint' => 'تحريك القبضة للأعلى والأسفل برأس الإيجاب'],
+        ['symbol' => '❌', 'label' => 'لا', 'hint' => 'تلويح اليد أفقياً للرفض']
+    ];
+} else {
+    $items = [
+        ['symbol' => '📖', 'label' => $title, 'hint' => 'اقرأ الوصف أعلاه وتدرب على إشارات هذا الدرس بعناية']
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -48,7 +111,6 @@ if (!$lesson) {
         * {
             box-sizing: border-box;
         }
-        /* تنسيق الهيدر بعرض الشاشة الكامل */
         .main-header {
             background-color: #1e293b;
             color: #ffffff;
@@ -89,7 +151,6 @@ if (!$lesson) {
             background-color: #2563eb;
         }
 
-        /* تنسيق تفاصيل الدرس */
         body {
             font-family: 'Tajawal', sans-serif;
             background-color: #f8fafc;
@@ -147,13 +208,54 @@ if (!$lesson) {
             padding: 18px 20px;
             border-radius: 12px;
             border-right: 4px solid #2563eb;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
+
+        /* قسم فيديو الشرح */
+        .video-section {
+            margin-bottom: 32px;
+        }
+        .video-frame-wrapper {
+            width: 100%;
+            max-width: 740px;
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #0f172a;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+        }
+        .video-frame-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+        .video-fallback {
+            text-align: center;
+            font-size: 13.5px;
+            color: #64748b;
+            margin-top: 10px;
+        }
+        .video-fallback a {
+            color: #2563eb;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .video-fallback a:hover {
+            text-decoration: underline;
+        }
+
         .section-heading {
             font-size: 19px;
             font-weight: 800;
             color: #0f172a;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+        }
+        .interactive-note {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 18px;
         }
         .lesson-content-grid {
             display: grid;
@@ -166,14 +268,17 @@ if (!$lesson) {
             border-radius: 14px;
             padding: 22px 16px;
             text-align: center;
+            cursor: pointer;
             transition: all 0.25s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            font-family: inherit;
         }
-        .sign-item:hover {
+        .sign-item:hover,
+        .sign-item.active {
             border-color: #2563eb;
             transform: translateY(-4px);
             background: #ffffff;
-            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.08);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
         }
         .sign-symbol {
             font-size: 46px;
@@ -190,6 +295,27 @@ if (!$lesson) {
             font-size: 13.5px;
             color: #64748b;
             line-height: 1.6;
+        }
+
+        /* صندوق الشرح التفاعلي عند الضغط على البطاقة */
+        .interactive-detail-box {
+            margin-top: 20px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 18px 22px;
+            display: none;
+        }
+        .interactive-detail-box .detail-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #60a5fa;
+            margin-bottom: 6px;
+        }
+        .interactive-detail-box .detail-text {
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0;
         }
     </style>
 </head>
@@ -223,70 +349,63 @@ if (!$lesson) {
                 <?php echo htmlspecialchars(isset($lesson['description']) ? $lesson['description'] : 'محتوى تعليمي مميز.'); ?>
             </div>
 
-            <h3 class="section-heading">محتوى الدرس والتدريبات:</h3>
-            <div class="lesson-content-grid">
-                <?php
-                $title = trim($lesson['title']);
-                
-                if ($title === 'الحروف') {
-                    $items = [
-                        ['symbol' => '☝️', 'label' => 'حرف الألف (أ)', 'hint' => 'رفع السبابة للأعلى مع ثني باقي الأصابع'],
-                        ['symbol' => '✋', 'label' => 'حرف الباء (ب)', 'hint' => 'فرد الكف للأمام مع ضم الإبهام'],
-                        ['symbol' => '✌️', 'label' => 'حرف التاء (ت)', 'hint' => 'رفع السبابة والوسطى بشكل متباعد'],
-                        ['symbol' => '🤟', 'label' => 'حرف الثاء (ث)', 'hint' => 'رفع ثلاث أصابع للأعلى'],
-                        ['symbol' => '🤏', 'label' => 'حرف الجيم (ج)', 'hint' => 'تقويس الأصابع بشكل نصف دائري'],
-                        ['symbol' => '✊', 'label' => 'حرف الحاء (ح)', 'hint' => 'قبض اليد مع توجيه الكف للأمام']
-                    ];
-                } elseif ($title === 'الأرقام') {
-                    $items = [
-                        ['symbol' => '☝️', 'label' => 'الرقم ١', 'hint' => 'إصبع السبابة مرفوع'],
-                        ['symbol' => '✌️', 'label' => 'الرقم ٢', 'hint' => 'السبابة والوسطى مرفوعتان'],
-                        ['symbol' => '🤟', 'label' => 'الرقم ٣', 'hint' => 'ثلاثة أصابع مرفوعة'],
-                        ['symbol' => '🖖', 'label' => 'الرقم ٤', 'hint' => 'أربعة أصابع مرفوعة دون الإبهام'],
-                        ['symbol' => '🖐️', 'label' => 'الرقم ٥', 'hint' => 'فتح جميع أصابع اليد الخمسة']
-                    ];
-                } elseif ($title === 'الألوان') {
-                    $items = [
-                        ['symbol' => '🔴', 'label' => 'لون أحمر', 'hint' => 'تمرير الإصبع على الشفاه مرتين'],
-                        ['symbol' => '🔵', 'label' => 'لون أزرق', 'hint' => 'تحريك اليد بحركة تشير للسماء'],
-                        ['symbol' => '🟢', 'label' => 'لون أخضر', 'hint' => 'هز اليد تدريجياً للدلالة على الطبيعة'],
-                        ['symbol' => '🟡', 'label' => 'لون أصفر', 'hint' => 'حركة دائرية تدل على الشمس']
-                    ];
-                } elseif ($title === 'المشاعر') {
-                    $items = [
-                        ['symbol' => '😊', 'label' => 'سعادة / فرح', 'hint' => 'رسم ابتسامة باليدين على الوجه'],
-                        ['symbol' => '😢', 'label' => 'حزن', 'hint' => 'تمرير الأصابع للأسفل بمحاذاة الخد كنزول الدموع'],
-                        ['symbol' => '😡', 'label' => 'غضب', 'hint' => 'قبض اليدين وتقطيب الحاجبين بقوة']
-                    ];
-                } elseif ($title === 'أفراد العائلة') {
-                    $items = [
-                        ['symbol' => '👨', 'label' => 'أب', 'hint' => 'وضع اليد بالقرب من الجبين'],
-                        ['symbol' => '👩', 'label' => 'أم', 'hint' => 'لمس الخد باليد بقبضة خفيفة'],
-                        ['symbol' => '👦', 'label' => 'أخ', 'hint' => 'ضم السبابتين معاً للدلالة على الأخوة'],
-                        ['symbol' => '👧', 'label' => 'أخت', 'hint' => 'إشارة تدل على الأخت بقرب الخد']
-                    ];
-                } elseif ($title === 'الكلمات الأساسية') {
-                    $items = [
-                        ['symbol' => '✔️', 'label' => 'نعم', 'hint' => 'تحريك القبضة للأعلى والأسفل برأس الإيجاب'],
-                        ['symbol' => '❌', 'label' => 'لا', 'hint' => 'تلويح اليد أفقياً للرفض'],
-                        ['symbol' => '❓', 'label' => 'لماذا / كيف', 'hint' => 'فتح الكفين للأمام باستفهام']
-                    ];
-                } else {
-                    $items = [
-                        ['symbol' => '📖', 'label' => $title, 'hint' => 'اقرأ الوصف أعلاه وتدرب على إشارات هذا الدرس بعناية']
-                    ];
-                }
+            <!-- فيديو الشرح التعليمي -->
+            <section class="video-section">
+                <h3 class="section-heading">فيديو شرح الدرس:</h3>
+                <div class="video-frame-wrapper">
+                    <iframe
+                        src="<?php echo htmlspecialchars($embed_url); ?>"
+                        title="فيديو شرح <?php echo htmlspecialchars($lesson['title']); ?>"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <p class="video-fallback">
+                    في حال لم يعمل الفيديو داخل الصفحة، يمكنك
+                    <a href="<?php echo htmlspecialchars($watch_url); ?>" target="_blank" rel="noopener">مشاهدته مباشرة على يوتيوب</a>.
+                </p>
+            </section>
 
-                foreach ($items as $item) {
-                    echo '<div class="sign-item">';
-                    echo '<span class="sign-symbol">' . $item['symbol'] . '</span>';
-                    echo '<div class="sign-label">' . $item['label'] . '</div>';
-                    echo '<div class="sign-hint">' . $item['hint'] . '</div>';
-                    echo '</div>';
-                }
-                ?>
-            </div>
+            <!-- التطبيق التفاعلي والبطاقات -->
+            <section>
+                <h3 class="section-heading">التطبيق التفاعلي — محتوى الدرس والتدريبات:</h3>
+                <p class="interactive-note">شاهد الفيديو التعليمي ثم اضغط على البطاقات بالأسفل للتدريب العملي ومعرفة طريقة حركة اليد.</p>
+
+                <div class="lesson-content-grid">
+                    <?php foreach ($items as $item): ?>
+                        <button
+                            type="button"
+                            class="sign-item"
+                            data-label="<?php echo htmlspecialchars($item['label'], ENT_QUOTES); ?>"
+                            data-hint="<?php echo htmlspecialchars($item['hint'], ENT_QUOTES); ?>"
+                            onclick="selectSignCard(this)">
+                            <span class="sign-symbol"><?php echo $item['symbol']; ?></span>
+                            <div class="sign-label"><?php echo htmlspecialchars($item['label']); ?></div>
+                            <div class="sign-hint"><?php echo htmlspecialchars($item['hint']); ?></div>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+
+                <div id="interactiveDetailBox" class="interactive-detail-box">
+                    <div id="detailTitle" class="detail-title"></div>
+                    <p id="detailText" class="detail-text"></p>
+                </div>
+            </section>
         </div>
     </main>
+
+    <script>
+        function selectSignCard(cardElement) {
+            document.querySelectorAll('.sign-item').forEach(el => el.classList.remove('active'));
+            cardElement.classList.add('active');
+
+            const label = cardElement.getAttribute('data-label');
+            const hint = cardElement.getAttribute('data-hint');
+
+            document.getElementById('detailTitle').textContent = 'طريقة إشارة (' + label + '):';
+            document.getElementById('detailText').textContent = hint;
+            document.getElementById('interactiveDetailBox').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
