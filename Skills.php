@@ -7,57 +7,238 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include 'db_connect.php';
 
-function e($value): string {
-    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+if (!function_exists('e')) {
+    function e($value): string {
+        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
 }
 
-// تحديد الطالب المسجل حالياً من الجلسة
-$student_id = $_SESSION['user_id'] ?? $_SESSION['student_id'] ?? 'guest_student';
-$student_key = 'student_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)$student_id);
-$student_name = trim((string)(
-    $_SESSION['user_name']
-    ?? $_SESSION['name']
-    ?? $_SESSION['username']
-    ?? 'أسيل'
-));
-if ($student_name === '') {
-    $student_name = 'أسيل';
-}
+$role = strtolower(trim((string)($_SESSION['role'] ?? 'student')));
+$is_teacher_or_admin = in_array($role, ['teacher', 'admin', 'معلم', 'مدير'], true);
 
-$default_skills = [
+// مجموعات مهارات متنوعة ومختلفة لكل طالب حتى لا تتشابه النتائج بين الطلاب
+$skill_presets = [
     [
-        'id' => 'sk_letters',
-        'title' => 'إشارات الحروف الهجائية',
-        'category' => 'الحروف',
-        'level' => 85,
-        'hand' => '☝️',
-        'notes' => 'تمييز وتقليد إشارات الحروف الأساسية بدقة.'
+        [
+            'id' => 'sk_p0_1',
+            'title' => 'إشارات الحروف الهجائية',
+            'category' => 'الحروف',
+            'level' => 90,
+            'hand' => '☝️',
+            'notes' => 'إتقان واضح لتشكيل الحروف الأساسية.'
+        ],
+        [
+            'id' => 'sk_p0_2',
+            'title' => 'إشارات الأرقام والعد',
+            'category' => 'الأرقام',
+            'level' => 75,
+            'hand' => '👉',
+            'notes' => 'تمييز الأرقام اليدوية بثبات جيد.'
+        ],
+        [
+            'id' => 'sk_p0_3',
+            'title' => 'إشارات الألوان',
+            'category' => 'الألوان',
+            'level' => 65,
+            'hand' => '🎨',
+            'notes' => 'يتعرف على الألوان الأساسية ويحتاج ممارسة إضافية.'
+        ],
+        [
+            'id' => 'sk_p0_4',
+            'title' => 'سرعة الملاحظة والتطابق',
+            'category' => 'المهارات الذهنية',
+            'level' => 85,
+            'hand' => '✌️',
+            'notes' => 'استجابة سريعة في الأنشطة التفاعلية.'
+        ]
     ],
     [
-        'id' => 'sk_numbers',
-        'title' => 'إشارات الأرقام والعد',
-        'category' => 'الأرقام',
-        'level' => 60,
-        'hand' => '☝️',
-        'notes' => 'قراءة الأرقام اليدوية واختيار الإشارة الصحيحة.'
+        [
+            'id' => 'sk_p1_1',
+            'title' => 'التحية والتواصل اليومي',
+            'category' => 'المحادثة',
+            'level' => 88,
+            'hand' => '✋',
+            'notes' => 'توظيف عبارات الترحيب والاستئذان بشكل جيد.'
+        ],
+        [
+            'id' => 'sk_p1_2',
+            'title' => 'إشارات أفراد العائلة',
+            'category' => 'العائلة',
+            'level' => 70,
+            'hand' => '👨‍👩‍👧‍👦',
+            'notes' => 'تعرف جيد على إشارات الأسرة المقربة.'
+        ],
+        [
+            'id' => 'sk_p1_3',
+            'title' => 'إشارات الحروف الهجائية',
+            'category' => 'الحروف',
+            'level' => 50,
+            'hand' => '☝️',
+            'notes' => 'يحتاج تكراراً أكثر لتثبيت الحروف المتشابهة.'
+        ],
+        [
+            'id' => 'sk_p1_4',
+            'title' => 'التعبير عن المشاعر',
+            'category' => 'المشاعر',
+            'level' => 78,
+            'hand' => '😊',
+            'notes' => 'ربط جيد بين الإشارة وتعبير الوجه المناسب.'
+        ]
     ],
     [
-        'id' => 'sk_greetings',
-        'title' => 'التحية والتواصل اليومي',
-        'category' => 'المحادثة',
-        'level' => 45,
-        'hand' => '✋',
-        'notes' => 'استخدام الإشارات التفاعلية في التحية والترحيب.'
+        [
+            'id' => 'sk_p2_1',
+            'title' => 'إشارات الحيوانات',
+            'category' => 'الحيوانات',
+            'level' => 92,
+            'hand' => '🐾',
+            'notes' => 'تفاعل ممتاز وحفظ سريع لإشارات الحيوانات.'
+        ],
+        [
+            'id' => 'sk_p2_2',
+            'title' => 'إشارات الأرقام والعد',
+            'category' => 'الأرقام',
+            'level' => 55,
+            'hand' => '👉',
+            'notes' => 'في طور التدريب على الأرقام المركبة.'
+        ],
+        [
+            'id' => 'sk_p2_3',
+            'title' => 'الكلمات الأساسية اليومية',
+            'category' => 'المحادثة',
+            'level' => 68,
+            'hand' => '👌',
+            'notes' => 'استخدام الكلمات الشائعة في المواقف البسيطة.'
+        ],
+        [
+            'id' => 'sk_p2_4',
+            'title' => 'الدقة الحركية للأصابع',
+            'category' => 'المهارات الحركية',
+            'level' => 40,
+            'hand' => '🤏',
+            'notes' => 'بحاجة لتمارين تدريجية لرفع الدقة.'
+        ]
     ],
     [
-        'id' => 'sk_focus',
-        'title' => 'سرعة الملاحظة والتطابق',
-        'category' => 'المهارات الذهنية',
-        'level' => 80,
-        'hand' => '✌️',
-        'notes' => 'الربط السريع بين الشكل والإشارة المناسبة.'
+        [
+            'id' => 'sk_p3_1',
+            'title' => 'إشارات الألوان',
+            'category' => 'الألوان',
+            'level' => 82,
+            'hand' => '🎨',
+            'notes' => 'تمييز دقيق لمعظم الألوان الأساسية.'
+        ],
+        [
+            'id' => 'sk_p3_2',
+            'title' => 'إشارات أفراد العائلة',
+            'category' => 'العائلة',
+            'level' => 95,
+            'hand' => '👨‍👩‍👧‍👦',
+            'notes' => 'إتقان مرتفع جداً لإشارات العائلة.'
+        ],
+        [
+            'id' => 'sk_p3_3',
+            'title' => 'إشارات الحروف الهجائية',
+            'category' => 'الحروف',
+            'level' => 62,
+            'hand' => '☝️',
+            'notes' => 'مستوى متوسط ويتحسن مع المراجعة.'
+        ],
+        [
+            'id' => 'sk_p3_4',
+            'title' => 'سرعة الملاحظة والتطابق',
+            'category' => 'المهارات الذهنية',
+            'level' => 74,
+            'hand' => '✌️',
+            'notes' => 'أداء جيد في مطابقة الإشارات.'
+        ]
     ]
 ];
+
+// جلب قائمة الطلاب من جدول child في قاعدة البيانات للمعلم/الأدمن
+$students_list = [];
+if (isset($conn)) {
+    try {
+        $res = @mysqli_query($conn, "SELECT * FROM child");
+        if ($res && mysqli_num_rows($res) > 0) {
+            $i = 0;
+            while ($row = mysqli_fetch_assoc($res)) {
+                $s_id = (string)($row['child_id'] ?? $row['id'] ?? ($i + 1));
+                $s_name = trim((string)($row['name'] ?? $row['child_name'] ?? ('طالب ' . ($i + 1))));
+                if ($s_name !== '') {
+                    $students_list[] = [
+                        'key' => 'child_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $s_id),
+                        'name' => $s_name,
+                        'preset_index' => $i % count($skill_presets)
+                    ];
+                    $i++;
+                }
+            }
+        }
+    } catch (Throwable $e) {}
+}
+
+if (empty($students_list)) {
+    $students_list = [
+        ['key' => 'child_1', 'name' => 'أحمد', 'preset_index' => 0],
+        ['key' => 'child_2', 'name' => 'عبدالله', 'preset_index' => 1],
+        ['key' => 'child_3', 'name' => 'حسن', 'preset_index' => 2],
+    ];
+}
+
+// تحديد الطالب المستهدف حسب الدور
+$preset_index = 0;
+
+if ($is_teacher_or_admin) {
+    if (isset($_GET['selected_student']) && trim((string)$_GET['selected_student']) !== '') {
+        $_SESSION['teacher_selected_student'] = trim((string)$_GET['selected_student']);
+    } elseif (isset($_POST['selected_student']) && trim((string)$_POST['selected_student']) !== '') {
+        $_SESSION['teacher_selected_student'] = trim((string)$_POST['selected_student']);
+    }
+
+    $selected_key = (string)($_SESSION['teacher_selected_student'] ?? $students_list[0]['key']);
+    $student_key = $selected_key;
+    $student_name = $students_list[0]['name'];
+    $preset_index = (int)($students_list[0]['preset_index'] ?? 0);
+
+    foreach ($students_list as $st) {
+        if ($st['key'] === $selected_key) {
+            $student_name = $st['name'];
+            $preset_index = (int)($st['preset_index'] ?? 0);
+            break;
+        }
+    }
+} else {
+    $student_id = $_SESSION['user_id'] ?? $_SESSION['student_id'] ?? 'guest_student';
+    $student_key = 'student_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)$student_id);
+    $student_name = trim((string)(
+        $_SESSION['student_name']
+        ?? $_SESSION['user_name']
+        ?? $_SESSION['name']
+        ?? $_SESSION['username']
+        ?? 'أسيل'
+    ));
+    if ($student_name === '') {
+        $student_name = 'أسيل';
+    }
+
+    // مطابقة الطالب مع قائمة الطلاب إن وجد للحصول على مجموعته الخاصة
+    $matched_preset = null;
+    foreach ($students_list as $st) {
+        if (trim((string)$st['name']) === $student_name) {
+            $matched_preset = (int)($st['preset_index'] ?? 0);
+            break;
+        }
+    }
+    if ($matched_preset !== null) {
+        $preset_index = $matched_preset;
+    } else {
+        $preset_index = abs(crc32($student_name)) % count($skill_presets);
+    }
+}
+
+$default_skills = $skill_presets[$preset_index] ?? $skill_presets[0];
 
 if (!isset($_SESSION['student_skills']) || !is_array($_SESSION['student_skills'])) {
     $_SESSION['student_skills'] = [];
@@ -71,7 +252,7 @@ $skills = &$_SESSION['student_skills'][$student_key];
 $success_msg = '';
 $error_msg = '';
 
-// معالجة التفاعلات على مهارات الطالب المسجل
+// معالجة التفاعلات على مهارات الطالب المحدد
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -82,7 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($skills as &$sk) {
             if ($sk['id'] === $skill_id) {
                 $sk['level'] = max(0, min(100, (int)$sk['level'] + $delta));
-                $success_msg = 'تم تحديث مهارة "' . $sk['title'] . '" إلى ' . $sk['level'] . '%!';
+                $success_msg = 'تم تحديث مهارة "' . $sk['title'] . '" للطالب ' . $student_name . ' إلى ' . $sk['level'] . '%!';
                 break;
             }
         }
@@ -109,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'reset_skills') {
         $skills = $default_skills;
-        $success_msg = 'تمت إعادة ضبط مهارات الطالب إلى الوضع الافتراضي.';
+        $success_msg = 'تمت إعادة ضبط مهارات الطالب ' . $student_name . ' إلى ملفه الأساسي.';
     }
 }
 
@@ -127,7 +308,7 @@ if (!empty($skills)) {
 <title>مهارات الطالب - منصة وصلة التعليمية</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-    * {
+* {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -219,6 +400,25 @@ if (!empty($skills)) {
     .student-banner p {
         font-size: 14.5px;
         color: #64748b;
+    }
+
+    .student-switcher {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .student-switcher select {
+        padding: 7px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        background: #f8fafc;
+        color: #0f172a;
     }
 
     .summary-pill {
@@ -476,7 +676,26 @@ if (!empty($skills)) {
         <div class="student-banner">
             <div>
                 <h1>مهارات الطالب: <?= e($student_name) ?></h1>
-                <p>ارفع أو أنقص نسبة إتقان كل مهارة حسب أداء الطالب، أو أضف مهارات جديدة مرتبطة بحسابه.</p>
+                <p>
+                    <?php if ($is_teacher_or_admin): ?>
+                        عرض ومتابعة مهارات الطلاب وتحديث نسب الإتقان لكل طالب باسمه ومهاراته الخاصة.
+                    <?php else: ?>
+                        ارفع أو أنقص نسبة إتقان كل مهارة حسب أداء الطالب، أو أضف مهارات جديدة مرتبطة بحسابه.
+                    <?php endif; ?>
+                </p>
+
+                <?php if ($is_teacher_or_admin): ?>
+                    <form method="GET" action="skills.php" class="student-switcher">
+                        <label for="selected_student" style="font-size:13.5px; font-weight:800; color:#334155;">اختر الطالب:</label>
+                        <select id="selected_student" name="selected_student" onchange="this.form.submit()">
+                            <?php foreach ($students_list as $st): ?>
+                                <option value="<?= e($st['key']) ?>" <?= $st['key'] === $student_key ? 'selected' : '' ?>>
+                                    <?= e($st['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+                <?php endif; ?>
             </div>
             <div class="summary-pill">متوسط الإتقان: <?= $avg_level ?>%</div>
         </div>
@@ -493,8 +712,9 @@ if (!empty($skills)) {
             <button type="button" class="btn btn-primary" onclick="toggleAddSkill()">+ إضافة مهارة جديدة</button>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <a href="game.php" class="btn">🎮 الانتقال للألعاب</a>
-                <form method="POST" action="skills.php" style="display:inline;" onsubmit="return confirm('إعادة ضبط جميع المهارات؟');">
+                <form method="POST" action="skills.php" style="display:inline;" onsubmit="return confirm('إعادة ضبط مهارات هذا الطالب إلى ملفه الأساسي؟');">
                     <input type="hidden" name="action" value="reset_skills">
+                    <input type="hidden" name="selected_student" value="<?= e($student_key) ?>">
                     <button type="submit" class="btn">🔄 إعادة ضبط</button>
                 </form>
             </div>
@@ -504,6 +724,7 @@ if (!empty($skills)) {
             <h2 style="font-size:17px; font-weight:800; margin-bottom:12px;">إضافة مهارة جديدة للطالب <?= e($student_name) ?></h2>
             <form method="POST" action="skills.php">
                 <input type="hidden" name="action" value="add_skill">
+                <input type="hidden" name="selected_student" value="<?= e($student_key) ?>">
                 <div class="form-grid">
                     <div class="form-field">
                         <label for="skill_title">اسم المهارة</label>
@@ -568,6 +789,7 @@ if (!empty($skills)) {
                     <div class="skill-actions">
                         <form method="POST" action="skills.php" style="display:inline;">
                             <input type="hidden" name="action" value="adjust_skill">
+                            <input type="hidden" name="selected_student" value="<?= e($student_key) ?>">
                             <input type="hidden" name="skill_id" value="<?= e($sk['id']) ?>">
                             <input type="hidden" name="delta" value="10">
                             <button type="submit" class="btn btn-success">+10% تقدم</button>
@@ -575,6 +797,7 @@ if (!empty($skills)) {
 
                         <form method="POST" action="skills.php" style="display:inline;">
                             <input type="hidden" name="action" value="adjust_skill">
+                            <input type="hidden" name="selected_student" value="<?= e($student_key) ?>">
                             <input type="hidden" name="skill_id" value="<?= e($sk['id']) ?>">
                             <input type="hidden" name="delta" value="-10">
                             <button type="submit" class="btn btn-danger">-10% تراجع</button>
