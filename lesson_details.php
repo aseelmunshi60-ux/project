@@ -6,25 +6,32 @@ include 'db_connect.php';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $title_param = isset($_GET['title']) ? trim($_GET['title']) : '';
+$video_param = isset($_GET['video']) ? trim($_GET['video']) : '';
 
 $lesson = null;
 
 // البحث باستخدام lesson_id
-if ($id > 0) {
-    $query = "SELECT * FROM lesson WHERE lesson_id = $id LIMIT 1";
-    $result = @mysqli_query($conn, $query);
-    if ($result && mysqli_num_rows($result) > 0) {
-        $lesson = mysqli_fetch_assoc($result);
+if ($id > 0 && isset($conn)) {
+    try {
+        $query = "SELECT * FROM lesson WHERE lesson_id = $id LIMIT 1";
+        $result = @mysqli_query($conn, $query);
+        if ($result && mysqli_num_rows($result) > 0) {
+            $lesson = mysqli_fetch_assoc($result);
+        }
+    } catch (Throwable $e) {
     }
 }
 
 // البحث بالعنوان إذا وُجد
-if (!$lesson && !empty($title_param)) {
-    $safe_title = mysqli_real_escape_string($conn, $title_param);
-    $query = "SELECT * FROM lesson WHERE title = '$safe_title' LIMIT 1";
-    $result = @mysqli_query($conn, $query);
-    if ($result && mysqli_num_rows($result) > 0) {
-        $lesson = mysqli_fetch_assoc($result);
+if (!$lesson && !empty($title_param) && isset($conn)) {
+    try {
+        $safe_title = mysqli_real_escape_string($conn, $title_param);
+        $query = "SELECT * FROM lesson WHERE title = '$safe_title' LIMIT 1";
+        $result = @mysqli_query($conn, $query);
+        if ($result && mysqli_num_rows($result) > 0) {
+            $lesson = mysqli_fetch_assoc($result);
+        }
+    } catch (Throwable $e) {
     }
 }
 
@@ -36,7 +43,7 @@ if (!$lesson) {
     ];
 }
 
-// ربط معرّف فيديو يوتيوب (Video ID) بكل درس
+// ربط معرّف فيديو يوتيوب (Video ID) بكل درس أساسي
 $lesson_videos = [
     'الحروف'          => 'AJeEBx3sbEc',
     'الأرقام'          => 'k8DXozUtsDI',
@@ -46,10 +53,55 @@ $lesson_videos = [
     'الكلمات الأساسية' => 'n-JGG0PKF0Q',
 ];
 
-$title = trim($lesson['title']);
-$video_id = $lesson_videos[$title] ?? 'AJeEBx3sbEc';
+// استخراج معرّف فيديو يوتيوب من أي رابط (watch?v=, youtu.be/, embed/, shorts/)
+function extractYoutubeId($url) {
+    $url = trim((string)$url);
+    if ($url === '') {
+        return '';
+    }
+    if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i', $url, $m)) {
+        return $m[1];
+    }
+    return '';
+}
+
+$title = trim($lesson['title'] ?? 'تفاصيل الدرس');
+
+// تحديد الوصف الحقيقي للدرس (سواء كان description أو content) وفصل أي سطر رابط فيديو محفوظ بداخله
+$raw_desc = $lesson['description'] ?? $lesson['content'] ?? 'محتوى تعليمي تفاعلي لتعلم لغة الإشارة بكل سهولة ويسر.';
+$detected_video_url = $video_param;
+
+if ($detected_video_url === '') {
+    foreach (['video_url', 'youtube_url', 'video_link', 'url', 'link'] as $vcol) {
+        if (!empty($lesson[$vcol])) {
+            $detected_video_url = trim((string)$lesson[$vcol]);
+            break;
+        }
+    }
+}
+
+if (preg_match('/رابط الفيديو:\s*(https?:\/\/\S+)/iu', $raw_desc, $vm)) {
+    if ($detected_video_url === '') {
+        $detected_video_url = trim($vm[1]);
+    }
+    $clean_desc = trim(preg_replace('/\s*رابط الفيديو:\s*https?:\/\/\S+/iu', '', $raw_desc));
+    $description_text = ($clean_desc !== '') ? $clean_desc : 'محتوى تعليمي تفاعلي لتعلم لغة الإشارة بكل سهولة ويسر.';
+} else {
+    $description_text = $raw_desc;
+}
+
+// اختيار معرّف الفيديو: من الرابط المرفق للدرس، أو من قائمة الدروس الأساسية، أو الافتراضي
+$custom_video_id = extractYoutubeId($detected_video_url);
+if ($custom_video_id !== '') {
+    $video_id = $custom_video_id;
+} else {
+    $video_id = $lesson_videos[$title] ?? 'AJeEBx3sbEc';
+}
+
 $embed_url = "https://www.youtube.com/embed/" . rawurlencode($video_id);
-$watch_url = "http://www.youtube.com/watch?v=" . rawurlencode($video_id);
+$watch_url = ($custom_video_id !== '' && $detected_video_url !== '')
+    ? $detected_video_url
+    : "https://www.youtube.com/watch?v=" . rawurlencode($video_id);
 
 if ($title === 'الحروف') {
     $items = [
@@ -104,7 +156,7 @@ if ($title === 'الحروف') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($lesson['title']); ?> - منصة وصلة التعليمية</title>
+    <title><?php echo htmlspecialchars($title); ?> - منصة وصلة التعليمية</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -341,12 +393,12 @@ if ($title === 'الحروف') {
     <main class="lesson-container">
         <div class="lesson-card-box">
             <div class="lesson-header">
-                <h1><?php echo htmlspecialchars($lesson['title']); ?></h1>
+                <h1><?php echo htmlspecialchars($title); ?></h1>
                 <a href="lesson.php" class="btn-back">⬅ العودة للدروس</a>
             </div>
             
             <div class="lesson-desc">
-                <?php echo htmlspecialchars(isset($lesson['description']) ? $lesson['description'] : 'محتوى تعليمي مميز.'); ?>
+                <?php echo htmlspecialchars($description_text); ?>
             </div>
 
             <!-- فيديو الشرح التعليمي -->
@@ -355,7 +407,7 @@ if ($title === 'الحروف') {
                 <div class="video-frame-wrapper">
                     <iframe
                         src="<?php echo htmlspecialchars($embed_url); ?>"
-                        title="فيديو شرح <?php echo htmlspecialchars($lesson['title']); ?>"
+                        title="فيديو شرح <?php echo htmlspecialchars($title); ?>"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen>
                     </iframe>
