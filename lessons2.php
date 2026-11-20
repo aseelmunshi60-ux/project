@@ -7,14 +7,38 @@ include 'db_connect.php';
 $success_msg = '';
 $error_msg = '';
 
-// معالجة إضافة درس جديد من قبل المعلم حسب أعمدة جدول lesson الفعلية (title, content, ...)
+if (!isset($_SESSION['lesson_icons']) || !is_array($_SESSION['lesson_icons'])) {
+    $_SESSION['lesson_icons'] = [];
+}
+
+// التأكد من وجود عمود icon في جدول lesson لدعم حفظ الأيقونات
+if (isset($conn)) {
+    try {
+        @$conn->set_charset("utf8mb4");
+        $col_check = @$conn->query("SHOW COLUMNS FROM lesson LIKE 'icon'");
+        if ($col_check && $col_check->num_rows === 0) {
+            @$conn->query("ALTER TABLE lesson ADD COLUMN icon VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '📚'");
+        } else {
+            @$conn->query("ALTER TABLE lesson MODIFY COLUMN icon VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '📚'");
+        }
+    } catch (Throwable $e) {
+    }
+}
+
+// معالجة إضافة درس جديد من قبل المعلم حسب أعمدة جدول lesson الفعلية (title, content, icon, ...)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_lesson') {
     $title = trim($_POST['title'] ?? '');
     $content = trim($_POST['description'] ?? '');
     $icon = trim($_POST['icon'] ?? '📚');
+    if ($icon === '') {
+        $icon = '📚';
+    }
     $video_url = trim($_POST['video_url'] ?? '');
 
     if (!empty($title)) {
+        // حفظ الأيقونة المختارة للدرس في الجلسة لضمان ظهورها دائماً
+        $_SESSION['lesson_icons'][$title] = $icon;
+
         if (isset($conn)) {
             try {
                 $columns = [];
@@ -148,7 +172,7 @@ $lessons = [
     ]
 ];
 
-// 2. دمج الدروس الموجودة في جدول lesson مع الدروس الـ 6 بأمان
+// 2. دمج الدروس الموجودة في جدول lesson مع الدروس الـ 6 بأمان وإخفاء نص الرابط من الوصف الظاهر
 if (isset($conn)) {
     try {
         $res = @mysqli_query($conn, "SELECT * FROM lesson");
@@ -159,28 +183,45 @@ if (isset($conn)) {
                     continue;
                 }
 
+                $db_icon = trim((string)($row['icon'] ?? ''));
+                $resolved_icon = $_SESSION['lesson_icons'][$db_title]
+                    ?? ($db_icon !== '' ? $db_icon : '📚');
+
                 $exists = false;
-                foreach ($lessons as $l) {
+                foreach ($lessons as &$l) {
                     if ($l['title'] === $db_title) {
+                        if ($db_icon !== '' || isset($_SESSION['lesson_icons'][$db_title])) {
+                            $l['icon'] = $resolved_icon;
+                        }
                         $exists = true;
                         break;
                     }
                 }
+                unset($l);
 
                 if (!$exists) {
                     $raw_content = $row['content'] ?? $row['description'] ?? 'محتوى تعليمي إضافي.';
                     $extracted_video = $row['video_url'] ?? $row['youtube_url'] ?? $row['url'] ?? '';
 
-                    // إذا كان رابط يوتيوب مكتوباً داخل content نستخرجه لعرضه كزر فيديو
-                    if ($extracted_video === '' && preg_match('/https?:\/\/\S+/i', $raw_content, $matches)) {
-                        $extracted_video = $matches[0];
+                    // استخراج رابط الفيديو إن كان مخزناً داخل content ثم إخفاؤه من نص الوصف الظاهر
+                    if (preg_match('/https?:\/\/\S+/i', $raw_content, $matches)) {
+                        if ($extracted_video === '') {
+                            $extracted_video = trim($matches[0]);
+                        }
+                    }
+
+                    $clean_desc = preg_replace('/^\s*رابط\s*الفيديو\s*:.*$/mu', '', $raw_content);
+                    $clean_desc = preg_replace('/https?:\/\/\S+/i', '', $clean_desc);
+                    $clean_desc = trim((string)$clean_desc);
+                    if ($clean_desc === '') {
+                        $clean_desc = 'محتوى تعليمي إضافي.';
                     }
 
                     $lessons[] = [
                         'id' => $row['lesson_id'] ?? $row['id'] ?? 99,
                         'title' => $db_title,
-                        'desc' => $raw_content,
-                        'icon' => $row['icon'] ?? '📚',
+                        'desc' => $clean_desc,
+                        'icon' => $resolved_icon,
                         'video_url' => $extracted_video
                     ];
                 }
@@ -202,7 +243,7 @@ function e($s) {
 <title>إدارة الدروس - المعلم</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Tajawal', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
 
     .navbar { width: 100%; background-color: #1e293b; color: #ffffff; padding: 15px 35px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
@@ -235,8 +276,6 @@ function e($s) {
     .lesson-card:hover { transform: translateY(-4px); border-color: #2563eb; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.08); }
     .lesson-info h2 { font-size: 19px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
     .lesson-info p { font-size: 14.5px; color: #475569; font-weight: 500; line-height: 1.7; margin-bottom: 14px; white-space: pre-line; }
-    .video-link { display: inline-block; margin-bottom: 16px; font-size: 13.5px; font-weight: 700; color: #dc2626; text-decoration: none; background: #fef2f2; padding: 6px 12px; border-radius: 8px; border: 1px solid #fecaca; }
-    .video-link:hover { background: #fee2e2; }
     .lesson-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px; }
     .lesson-icon { font-size: 32px; }
     .card-btn { background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; }
@@ -306,6 +345,14 @@ function e($s) {
                         <option value="👌">👌 إشارة موافقة</option>
                         <option value="🤏">🤏 حركة دقيقة</option>
                         <option value="💡">💡 إضاءة</option>
+                        <option value="🐾">🐾 الحيوانات</option>
+                        <option value="🍎">🍎 الأكل والطعام</option>
+                        <option value="⏰">⏰ الوقت والساعة</option>
+                        <option value="🏠">🏠 الأماكن والمنزل</option>
+                        <option value="🌦️">🌦️ الفصول والطقس</option>
+                        <option value="🛡️">🛡️ السلامة والوقاية</option>
+                        <option value="🗣️">🗣️ التواصل والحوار</option>
+                        <option value="🎯">🎯 التدريب والاختبار</option>
                     </select>
                 </div>
 
@@ -323,12 +370,9 @@ function e($s) {
                     <div class="lesson-info">
                         <h2><?= e($l['title']) ?></h2>
                         <p><?= e($l['desc']) ?></p>
-                        <?php if (!empty($l['video_url'])): ?>
-                            <a href="<?= e($l['video_url']) ?>" target="_blank" rel="noopener noreferrer" class="video-link">▶ مشاهدة فيديو اليوتيوب</a>
-                        <?php endif; ?>
                     </div>
                     <div class="lesson-footer">
-                        <span class="lesson-icon"><?= $l['icon'] ?></span>
+                        <span class="lesson-icon"><?= e($l['icon']) ?></span>
                         <a href="lesson_details.php?id=<?= (int)$l['id'] ?>&title=<?= urlencode($l['title']) ?><?= !empty($l['video_url']) ? '&video=' . urlencode($l['video_url']) : '' ?>" class="card-btn">عرض الدرس</a>
                     </div>
                 </div>
